@@ -3,6 +3,9 @@
 -- Fix utama: resolve farm MILIK LOCALPLAYER (Important.Data.Owner == LP.Name)
 --            sehingga PlaceEgg tetap jalan walau ada player lain di server.
 
+if getgenv().AutoUE_Running then return end
+getgenv().AutoUE_Running = true
+
 --==============================
 -- Load WindUI
 --==============================
