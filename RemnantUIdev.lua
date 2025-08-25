@@ -95,6 +95,12 @@ local TabMisc_ESP = SecMisc:Tab({ Title = "ESP", Icon = "eye" })
 --======================================================
 -- Save references
 --======================================================
+--======================================================
+-- Save references (preserve Controls registry)
+--======================================================
+local _oldUI = rawget(getgenv(), "RemnantUI")
+local _controls = _oldUI and _oldUI.Controls or {}
+
 getgenv().RemnantUI = {
     Window = Window,
     Tabs = {
@@ -117,7 +123,8 @@ getgenv().RemnantUI = {
         Misc_AUE        = TabMisc_AUE,
         Misc_ESP        = TabMisc_ESP,
     },
-    Sections = { Farm = SecFarm, PetEgg = SecPetEgg, Shop = SecShopCraft, Event = SecEvent, Misc = SecMisc }
+    Sections = { Farm = SecFarm, PetEgg = SecPetEgg, Shop = SecShopCraft, Event = SecEvent, Misc = SecMisc },
+    Controls = _controls, -- <== penting: bawa balik registry
 }
 
 --======================================================
@@ -271,9 +278,8 @@ TabHomeRef:Button({
     Title = ".devlogic Discord",
     Icon  = "message-circle",
     Callback = function()
-        -- TODO: buka/copy link discord kamu
-        -- setclipboard("https://discord.gg/xxxx") -- contoh
-    end
+    setclipboard("https://discord.gg/TqXwyyxtR3") -- ganti ke invite kamu
+end
 })
 
 -- Server
@@ -291,33 +297,60 @@ TabHomeRef:Button({
     Title = "Join Server",
     Icon  = "log-in",
     Callback = function()
-        -- TODO: join by State.Home.JobID
+    local TeleportService = game:GetService("TeleportService")
+    local placeId = game.PlaceId
+    local jobId = tostring(State.Home.JobID or "")
+    if jobId ~= "" then
+        TeleportService:TeleportToPlaceInstance(placeId, jobId)
     end
+end
 })
 
 TabHomeRef:Button({
     Title = "Rejoin This Server",
     Icon  = "rotate-ccw",
-    Callback = function()
-        -- TODO: rejoin current job
-    end
+   Callback = function()
+    local TeleportService = game:GetService("TeleportService")
+    TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId)
+end
 })
 
 TabHomeRef:Button({
     Title = "Auto Rejoin This Server",
     Icon  = "refresh-ccw",
     Callback = function()
-        State.Home.AutoRejoin = not State.Home.AutoRejoin
-        -- TODO: start/stop loop auto rejoin
+    State.Home.AutoRejoin = not State.Home.AutoRejoin
+    if State.Home.AutoRejoin then
+        if C and C.__AutoRejoin_Task and task.cancel then
+            task.cancel(C.__AutoRejoin_Task)
+        end
+        C.__AutoRejoin_Task = task.spawn(function()
+            while State.Home.AutoRejoin do
+                task.wait(60) -- cek tiap 60s; atur sesuai butuh
+                -- contoh kondisi: kalau player sendirian / latency tinggi, dll
+                -- di sini kita simple rejoin paksa:
+                local TeleportService = game:GetService("TeleportService")
+                TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId)
+                break
+            end
+        end)
+    else
+        if C and C.__AutoRejoin_Task and task.cancel then
+            task.cancel(C.__AutoRejoin_Task)
+            C.__AutoRejoin_Task = nil
+        end
     end
+end
 })
 
+-- Copy JobID
 TabHomeRef:Button({
     Title = "Copy JobID",
     Icon  = "clipboard",
     Callback = function()
-        -- TODO: setclipboard(State.Home.JobID)
-    end
+    State.Home.JobID = game.JobId
+    setclipboard(State.Home.JobID)
+end
 })
 
 -- Hop Server
@@ -895,6 +928,95 @@ local TG_ESP_Pet = TabESPRef:Toggle({
     end
 })
 
+--======================================================
+-- Register Controls (agar modul luar bisa akses elemen UI)
+--======================================================
+local UIRef = getgenv().RemnantUI
+local C = UIRef.Controls
+
+-- Plants & Fruits
+C.DD_Plant_Seed       = DD_Plant_Seed
+C.DD_Harvest_Fruit    = DD_Harvest_Fruit
+C.DD_Harvest_White    = DD_Harvest_White
+C.DD_Harvest_Black    = DD_Harvest_Black
+C.DD_Move_Select      = DD_Move_Select
+C.TG_AutoPlant        = TG_AutoPlant
+C.TG_AutoCollect      = TG_AutoCollect
+C.TG_AutoMove         = TG_AutoMove
+
+-- Sprinkler
+C.DD_Sprinkler_Select = DD_Sprinkler_Select
+C.DD_Sprinkler_Pos    = DD_Sprinkler_Pos
+C.TG_Sprinkler_AutoPlace = TG_Sprinkler_AutoPlace
+
+-- Shovel
+C.DD_Shovel_Fruit     = DD_Shovel_Fruit
+C.DD_Shovel_WhiteMut  = DD_Shovel_WhiteMut
+C.DD_Shovel_BlackMut  = DD_Shovel_BlackMut
+C.DD_Shovel_Sprinkler = DD_Shovel_Sprinkler
+C.DD_Shovel_Plant     = DD_Shovel_Plant
+C.TG_Shovel_Fruit     = TG_Shovel_Fruit
+C.TG_Shovel_Sprinkler = TG_Shovel_Sprinkler
+C.TG_Shovel_Plant     = TG_Shovel_Plant
+
+-- Loadout
+C.DD_Loadout_Select   = DD_Loadout_Select
+
+-- Pet
+C.DD_Pet_SelectBoost  = DD_Pet_SelectBoost
+C.DD_Pet_Boost        = DD_Pet_Boost
+C.DD_Pet_SelectFav    = DD_Pet_SelectFav
+C.DD_Pet_SelectSell   = DD_Pet_SelectSell
+C.DD_Pet_Blacklist    = DD_Pet_Blacklist
+C.TG_Pet_AutoBoost    = TG_Pet_AutoBoost
+C.TG_Pet_AutoFav      = TG_Pet_AutoFav
+C.TG_Pet_AutoSell     = TG_Pet_AutoSell
+
+-- Egg
+C.DD_Egg_SelectPlace  = DD_Egg_SelectPlace
+C.DD_Egg_SelectHatch  = DD_Egg_SelectHatch
+C.TG_Egg_AutoPlace    = TG_Egg_AutoPlace
+C.TG_Egg_AutoHatch    = TG_Egg_AutoHatch
+
+-- Shop
+C.DD_Shop_Seed        = DD_Shop_Seed
+C.DD_Shop_Gear        = DD_Shop_Gear
+C.DD_Shop_Egg         = DD_Shop_Egg
+C.DD_Shop_Merchant    = DD_Shop_Merchant
+C.DD_Shop_MerchantItem= DD_Shop_MerchantItem
+C.DD_Shop_Cosmetic    = DD_Shop_Cosmetic
+C.DD_Shop_EventItem   = DD_Shop_EventItem
+C.TG_Shop_AutoSeed    = TG_Shop_AutoSeed
+C.TG_Shop_AutoGear    = TG_Shop_AutoGear
+C.TG_Shop_AutoEgg     = TG_Shop_AutoEgg
+C.TG_Shop_AutoMerchant= TG_Shop_AutoMerchant
+C.TG_Shop_AutoCosmetic= TG_Shop_AutoCosmetic
+C.TG_Shop_AutoEvent   = TG_Shop_AutoEvent
+
+-- Craft
+C.DD_Craft_Gear       = DD_Craft_Gear
+C.DD_Craft_Seed       = DD_Craft_Seed
+C.DD_Craft_Event      = DD_Craft_Event
+C.TG_Craft_AutoGear   = TG_Craft_AutoGear
+C.TG_Craft_AutoSeed   = TG_Craft_AutoSeed
+C.TG_Craft_AutoEvent  = TG_Craft_AutoEvent
+
+-- Event
+C.DD_Event_Fruit      = DD_Event_Fruit
+C.DD_Event_White      = DD_Event_White
+C.DD_Event_Black      = DD_Event_Black
+C.TG_Event_AutoSubmit = TG_Event_AutoSubmit
+C.TG_Event_AutoCollect= TG_Event_AutoCollect
+
+-- ESP
+C.DD_ESP_Fruit        = DD_ESP_Fruit
+C.DD_ESP_Mutation     = DD_ESP_Mutation
+C.IN_ESP_Weight       = IN_ESP_Weight
+C.TG_ESP_Fruit        = TG_ESP_Fruit
+C.TG_ESP_Egg          = TG_ESP_Egg
+C.TG_ESP_Crate        = TG_ESP_Crate
+C.TG_ESP_Pet          = TG_ESP_Pet
+
 
 --======================================================
 -- API: update isi dropdown dari luar (dinamis)
@@ -1031,6 +1153,21 @@ Window:OnClose(function()
   -- kalau kamu simpan handle Toggle di RemnantUI.Controls, bisa juga panggil :Set(false)
   -- misal: if C.TG_AutoPlant and C.TG_AutoPlant.Set then C.TG_AutoPlant:Set(false) end
 end)
+
+-- setelah mematikan semua flag:
+if getgenv().RemnantUI and getgenv().RemnantUI.Controls then
+    for k, ctrl in pairs(getgenv().RemnantUI.Controls) do
+        if type(ctrl) == "table" and ctrl.Set then
+            pcall(function() ctrl:Set(false) end)
+        end
+    end
+    -- matikan task internal (contoh AutoRejoin task di atas)
+    if getgenv().RemnantUI.Controls.__AutoRejoin_Task and task.cancel then
+        task.cancel(getgenv().RemnantUI.Controls.__AutoRejoin_Task)
+        getgenv().RemnantUI.Controls.__AutoRejoin_Task = nil
+    end
+end
+
 
 --======================================================
 -- Pilih tab default
