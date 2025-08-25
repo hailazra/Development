@@ -2,6 +2,34 @@
 -- Remnant Hub — WindUI (Docs-Compliant) + Lucide Icons
 --======================================================
 
+-- ======================
+-- Globals for all features
+-- ======================
+local Players    = game:GetService("Players")
+local RS         = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+local Workspace  = game:GetService("Workspace")
+
+local LP         = Players.LocalPlayer
+local Backpack   = LP:WaitForChild("Backpack")
+local Character  = LP.Character or LP.CharacterAdded:Wait()
+local Humanoid   = Character:WaitForChild("Humanoid")
+local Camera     = Workspace.CurrentCamera
+
+-- Export biar bisa dipakai semua loadstring
+getgenv().RemnantGlobals = {
+    Players    = Players,
+    RS         = RS,
+    RunService = RunService,
+    Workspace  = Workspace,
+    LP         = LP,
+    Backpack   = Backpack,
+    Character  = Character,
+    Humanoid   = Humanoid,
+    Camera     = Camera,
+}
+
+
 -- 1) Load WindUI (docs: Load latest)
 local WindUI = loadstring(game:HttpGet(
     "https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"
