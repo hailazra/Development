@@ -209,7 +209,7 @@ local DD_Plant_Seed = TabPlants:Dropdown({
     Callback = function(list) State.Plants.SeedsSelected = list end
 })
 local DD_Plant_Pos = TabPlants:Dropdown({
-    Title = "Position", Multi = true, Values = { "Player", "Random" }, Default = { "Player" },
+    Title = "Position", Multi = false, Values = { "Player", "Random" }, Default = { "Player" },
     Callback = function(list) State.Plants.PositionsSelected = list end
 })
 local TG_AutoPlant = TabPlants:Toggle({
