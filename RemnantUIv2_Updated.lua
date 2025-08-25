@@ -836,7 +836,7 @@ local TabESPRef = UI.Tabs.Misc_ESP
 -- "Fruit" section
 TabESPRef:Section({ Title = "Fruit", TextXAlignment = "Left", TextSize = 17 })
 
-local DD_ESP_Fruit = TabESP:Dropdown({
+local DD_ESP_Fruit = TabESPRef:Dropdown({
   Title = "Select Fruit",
   Multi = true,
   Values = {},
@@ -845,7 +845,7 @@ local DD_ESP_Fruit = TabESP:Dropdown({
   Callback = function(list) State.ESP.FruitsSelected = list end
 })
 
-local DD_ESP_Mutation = TabESP:Dropdown({
+local DD_ESP_Mutation = TabESPRef:Dropdown({
   Title = "Select Mutation",
   Multi = true,
   Values = {},
@@ -853,13 +853,13 @@ local DD_ESP_Mutation = TabESP:Dropdown({
   Callback = function(list) State.ESP.MutationsSelected = list end
 })
 
-local IN_ESP_Weight = TabESP:Input({
+local IN_ESP_Weight = TabESPRef:Input({
   Title = "Weight Threshold (kg)",
   Value = "",  -- string; parse nanti
   Callback = function(v) State.ESP.WeightThreshold = tonumber(v) end
 })
 
-local TG_ESP_Fruit = TabESP:Toggle({
+local TG_ESP_Fruit = TabESPRef:Toggle({
   Title = "ESP: Fruit",
   Value = false, -- was Default
   Callback = function(on) State.ESP.ESPFruit = on end
