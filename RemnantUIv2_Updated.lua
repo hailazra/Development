@@ -52,8 +52,7 @@ local TabShopCraft_Craft  = SecShopCraft:Tab({ Title = "Craft",  Icon = "setting
 
 -- E. Event = Tab Section (COLLAPSIBLE)
 local SecEvent = Window:Section({ Title = "Event", Icon = "calendar-days", Opened = false })
-local TabEvent_Auto  = SecEvent:Tab({ Title = "Auto Event", Icon = "zap" })
-local TabEvent_Claim = SecEvent:Tab({ Title = "Auto Claim", Icon = "package" })
+local TabEvent = SecEvent:Tab({ Title = "Auto Event & Collect", Icon = "zap" })
 
 -- F. Misc = Tab Section (COLLAPSIBLE)
 local SecMisc = Window:Section({ Title = "Misc", Icon = "settings-2", Opened = false })
@@ -84,8 +83,7 @@ getgenv().RemnantUI = {
         Shop_Shop       = TabShopCraft_Shop,
         Shop_Craft      = TabShopCraft_Craft,
         -- Event
-        Event_Auto      = TabEvent_Auto,
-        Event_Claim     = TabEvent_Claim,
+        Event           = TabEvent,
         -- Misc
         Misc_AUE        = TabMisc_AUE,
         Misc_ESP        = TabMisc_ESP,
@@ -168,6 +166,16 @@ State.Craft = State.Craft or {
     Seed  = { Selected = {}, Auto = false },
     Event = { Selected = {}, Auto = false },
 }
+
+-- Event (Submit & Collect)
+State.Event = State.Event or {
+    FruitsSelected    = {},
+    WhiteMutation     = {},
+    BlackMutation     = {},
+    AutoSubmit        = false,
+    AutoCollectReward = false,
+}
+
 
 --======================================================
 -- Helpers
@@ -542,6 +550,63 @@ local TG_Craft_AutoEvent = TabCraftRef:Toggle({
 })
 
 --======================================================
+-- ================= EVENT: Auto Event & Collect =======
+--======================================================
+local TabEventRef = UI.Tabs.Event
+
+TabEventRef:Section({ Title = "Auto Submit", TextXAlignment = "Left", TextSize = 17 })
+
+local DD_Event_Fruit = TabEventRef:Dropdown({
+    Title = "Select Fruit",
+    Multi = true,
+    Values = {},
+    Default = {},
+    Placeholder = "Choose fruits...",
+    Callback = function(list)
+        State.Event.FruitsSelected = list
+    end
+})
+
+local DD_Event_White = TabEventRef:Dropdown({
+    Title = "Whitelist Mutation",
+    Multi = true,
+    Values = {},
+    Default = {},
+    Placeholder = "Whitelist mutations...",
+    Callback = function(list)
+        State.Event.WhiteMutation = list
+    end
+})
+
+local DD_Event_Black = TabEventRef:Dropdown({
+    Title = "Blacklist Mutation",
+    Multi = true,
+    Values = {},
+    Default = {},
+    Placeholder = "Blacklist mutations...",
+    Callback = function(list)
+        State.Event.BlackMutation = list
+    end
+})
+
+local TG_Event_AutoSubmit = TabEventRef:Toggle({
+    Title = "Auto Submit",
+    Default = false,
+    Callback = function(on)
+        State.Event.AutoSubmit = on
+    end
+})
+
+local TG_Event_AutoCollect = TabEventRef:Toggle({
+    Title = "Auto Collect Reward",
+    Default = false,
+    Callback = function(on)
+        State.Event.AutoCollectReward = on
+    end
+})
+
+
+--======================================================
 -- API: update isi dropdown dari luar (dinamis)
 --======================================================
 getgenv().RemnantUI.API       = getgenv().RemnantUI.API or {}
@@ -551,6 +616,7 @@ getgenv().RemnantUI.API.Egg   = getgenv().RemnantUI.API.Egg or {}
 getgenv().RemnantUI.API.Team  = getgenv().RemnantUI.API.Team or {}
 getgenv().RemnantUI.API.Shop  = getgenv().RemnantUI.API.Shop or {}
 getgenv().RemnantUI.API.Craft = getgenv().RemnantUI.API.Craft or {}
+etgenv().RemnantUI.API.Event = getgenv().RemnantUI.API.Event or {}
 
 local FarmAPI = getgenv().RemnantUI.API.Farm
 local PetAPI  = getgenv().RemnantUI.API.Pet
@@ -558,6 +624,7 @@ local EggAPI  = getgenv().RemnantUI.API.Egg
 local TeamAPI = getgenv().RemnantUI.API.Team
 local ShopAPI = getgenv().RemnantUI.API.Shop
 local CraftAPI= getgenv().RemnantUI.API.Craft
+local EventAPI = getgenv().RemnantUI.API.Event
 
 -- Farm: Plants
 FarmAPI.SetSeedList           = function(list) setValues(DD_Plant_Seed, list) end
@@ -603,6 +670,11 @@ ShopAPI.SetEventItemList    = function(list) setValues(DD_Shop_EventItem, list) 
 CraftAPI.SetCraftGearList   = function(list) setValues(DD_Craft_Gear, list) end
 CraftAPI.SetCraftSeedList   = function(list) setValues(DD_Craft_Seed, list) end
 CraftAPI.SetCraftEventList  = function(list) setValues(DD_Craft_Event, list) end
+
+-- Event
+EventAPI.SetFruitList          = function(list) if DD_Event_Fruit and DD_Event_Fruit.SetValues then DD_Event_Fruit:SetValues(list) end end
+EventAPI.SetWhiteMutationList  = function(list) if DD_Event_White and DD_Event_White.SetValues then DD_Event_White:SetValues(list) end end
+EventAPI.SetBlackMutationList  = function(list) if DD_Event_Black and DD_Event_Black.SetValues then DD_Event_Black:SetValues(list) end end
 
 --======================================================
 -- Pilih tab default
