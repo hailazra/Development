@@ -29,6 +29,11 @@ getgenv().RemnantGlobals = {
     Camera     = Camera,
 }
 
+--=== RemnantUI Controls registry (wajib agar elemen bisa diakses modul) ===
+getgenv().RemnantUI = getgenv().RemnantUI or {}
+getgenv().RemnantUI.Controls = getgenv().RemnantUI.Controls or {}
+local Controls = getgenv().RemnantUI.Controls
+
 
 -- 1) Load WindUI (docs: Load latest)
 local WindUI = loadstring(game:HttpGet(
