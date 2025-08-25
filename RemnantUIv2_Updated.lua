@@ -840,7 +840,7 @@ local DD_ESP_Fruit = TabESP:Dropdown({
   Title = "Select Fruit",
   Multi = true,
   Values = {},
-  Value  = {},        -- was Default = {}
+  Default  = {},        -- was Default = {}
   Placeholder = "Choose fruits...",
   Callback = function(list) State.ESP.FruitsSelected = list end
 })
