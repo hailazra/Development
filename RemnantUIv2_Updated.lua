@@ -214,6 +214,7 @@ end
 --======================================================
 -- ====================== HOME =========================
 --======================================================
+local UI = getgenv().RemnantUI
 local TabHomeRef = UI.Tabs.Home
 
 -- Changelog
@@ -377,7 +378,6 @@ local TG_Webhook_DC = TabHomeRef:Toggle({
 --======================================================
 -- ==============  FARM: Plants & Fruits  ==============
 --======================================================
-local UI = getgenv().RemnantUI
 local TabPlants     = UI.Tabs.Farm_Plants
 local TabSprinkler  = UI.Tabs.Farm_Sprinkler
 local TabShovel     = UI.Tabs.Farm_Shovel
