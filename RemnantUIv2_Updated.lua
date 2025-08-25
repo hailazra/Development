@@ -978,6 +978,55 @@ EventAPI.SetBlackMutationList  = function(list) if DD_Event_Black and DD_Event_B
 ESPAPI.SetFruitList    = function(list) if DD_ESP_Fruit and DD_ESP_Fruit.SetValues then DD_ESP_Fruit:SetValues(list) end end
 ESPAPI.SetMutationList = function(list) if DD_ESP_Mutation and DD_ESP_Mutation.SetValues then DD_ESP_Mutation:SetValues(list) end end
 
+Window:OnClose(function()
+  local s = State
+  -- Set semua flag auto ke false
+  s.Plants.AutoPlant = false
+  s.Plants.AutoCollect = false
+  s.Plants.AutoMove = false
+
+  s.Sprinkler.AutoPlace = false
+
+  s.Shovel.AutoShovelFruit = false
+  s.Shovel.AutoShovelSprinkler = false
+  s.Shovel.AutoShovelPlant = false
+
+  s.Home.AutoRejoin = false
+  s.Home.AutoHopServer = false
+
+  s.Webhook.Enable = false
+  s.Webhook.DisconnectNotify = false
+
+  s.Pet.AutoBoost = false
+  s.Pet.AutoFavorite = false
+  s.Pet.AutoSell = false
+
+  s.Egg.AutoPlaceEgg = false
+  s.Egg.AutoHatchEgg = false
+
+  s.Shop.Seed.Auto = false
+  s.Shop.Gear.Auto = false
+  s.Shop.Egg.Auto = false
+  s.Shop.Merchant.Auto = false
+  s.Shop.Cosmetic.Auto = false
+  s.Shop.Event.Auto = false
+
+  s.Craft.Gear.Auto = false
+  s.Craft.Seed.Auto = false
+  s.Craft.Event.Auto = false
+
+  s.Event.AutoSubmit = false
+  s.Event.AutoCollectReward = false
+
+  s.ESP.ESPFruit = false
+  s.ESP.ESPEgg = false
+  s.ESP.ESPCrate = false
+  s.ESP.ESPPet = false
+
+  -- kalau kamu simpan handle Toggle di RemnantUI.Controls, bisa juga panggil :Set(false)
+  -- misal: if C.TG_AutoPlant and C.TG_AutoPlant.Set then C.TG_AutoPlant:Set(false) end
+end)
+
 --======================================================
 -- Pilih tab default
 --======================================================
