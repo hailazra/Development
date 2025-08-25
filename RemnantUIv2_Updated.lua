@@ -176,6 +176,16 @@ State.Event = State.Event or {
     AutoCollectReward = false,
 }
 
+-- ESP (Misc)
+State.ESP = State.ESP or {
+    FruitsSelected   = {},
+    MutationsSelected= {},
+    WeightThreshold  = nil,
+    ESPFruit         = false,
+    ESPEgg           = false,
+    ESPCrate         = false,
+    ESPPet           = false,
+}
 
 --======================================================
 -- Helpers
@@ -605,6 +615,83 @@ local TG_Event_AutoCollect = TabEventRef:Toggle({
     end
 })
 
+--======================================================
+-- ==============  MISC: ESP  ==========================
+--======================================================
+local TabESPRef = UI.Tabs.Misc_ESP
+
+-- "Fruit" section
+TabESPRef:Section({ Title = "Fruit", TextXAlignment = "Left", TextSize = 17 })
+
+local DD_ESP_Fruit = TabESPRef:Dropdown({
+    Title = "Select Fruit",
+    Multi = true,
+    Values = {},
+    Default = {},
+    Placeholder = "Choose fruits...",
+    Callback = function(list)
+        State.ESP.FruitsSelected = list
+    end
+})
+
+local DD_ESP_Mutation = TabESPRef:Dropdown({
+    Title = "Select Mutation",
+    Multi = true,
+    Values = {},
+    Default = {},
+    Placeholder = "Choose mutations...",
+    Callback = function(list)
+        State.ESP.MutationsSelected = list
+    end
+})
+
+local IN_ESP_Weight = TabESPRef:Input({
+    Title = "Weight Threshold",
+    Placeholder = "e.g. 3 (kg)",
+    Numeric = true,
+    Callback = function(v)
+        State.ESP.WeightThreshold = tonumber(v)
+    end
+})
+
+local TG_ESP_Fruit = TabESPRef:Toggle({
+    Title = "ESP Fruit",
+    Default = false,
+    Callback = function(on)
+        State.ESP.ESPFruit = on
+    end
+})
+
+-- "Egg & Crate" section
+TabESPRef:Section({ Title = "Egg & Crate", TextXAlignment = "Left", TextSize = 17 })
+
+local TG_ESP_Egg = TabESPRef:Toggle({
+    Title = "ESP Egg",
+    Default = false,
+    Callback = function(on)
+        State.ESP.ESPEgg = on
+    end
+})
+
+local TG_ESP_Crate = TabESPRef:Toggle({
+    Title = "ESP Crate",
+    Default = false,
+    Callback = function(on)
+        State.ESP.ESPCrate = on
+    end
+})
+
+-- "Pet" section
+TabESPRef:Section({ Title = "Pet", TextXAlignment = "Left", TextSize = 17 })
+
+local TG_ESP_Pet = TabESPRef:Toggle({
+    Title = "ESP Pet",
+    Default = false,
+    Callback = function(on)
+        State.ESP.ESPPet = on
+    end
+})
+
 
 --======================================================
 -- API: update isi dropdown dari luar (dinamis)
@@ -617,6 +704,7 @@ getgenv().RemnantUI.API.Team  = getgenv().RemnantUI.API.Team or {}
 getgenv().RemnantUI.API.Shop  = getgenv().RemnantUI.API.Shop or {}
 getgenv().RemnantUI.API.Craft = getgenv().RemnantUI.API.Craft or {}
 etgenv().RemnantUI.API.Event = getgenv().RemnantUI.API.Event or {}
+getgenv().RemnantUI.API.ESP = getgenv().RemnantUI.API.ESP or {}
 
 local FarmAPI = getgenv().RemnantUI.API.Farm
 local PetAPI  = getgenv().RemnantUI.API.Pet
@@ -624,6 +712,7 @@ local EggAPI  = getgenv().RemnantUI.API.Egg
 local TeamAPI = getgenv().RemnantUI.API.Team
 local ShopAPI = getgenv().RemnantUI.API.Shop
 local CraftAPI= getgenv().RemnantUI.API.Craft
+local EventAPI = getgenv().RemnantUI.API.Event
 local EventAPI = getgenv().RemnantUI.API.Event
 
 -- Farm: Plants
@@ -672,6 +761,11 @@ CraftAPI.SetCraftSeedList   = function(list) setValues(DD_Craft_Seed, list) end
 CraftAPI.SetCraftEventList  = function(list) setValues(DD_Craft_Event, list) end
 
 -- Event
+EventAPI.SetFruitList          = function(list) if DD_Event_Fruit and DD_Event_Fruit.SetValues then DD_Event_Fruit:SetValues(list) end end
+EventAPI.SetWhiteMutationList  = function(list) if DD_Event_White and DD_Event_White.SetValues then DD_Event_White:SetValues(list) end end
+EventAPI.SetBlackMutationList  = function(list) if DD_Event_Black and DD_Event_Black.SetValues then DD_Event_Black:SetValues(list) end end
+
+-- ESP
 EventAPI.SetFruitList          = function(list) if DD_Event_Fruit and DD_Event_Fruit.SetValues then DD_Event_Fruit:SetValues(list) end end
 EventAPI.SetWhiteMutationList  = function(list) if DD_Event_White and DD_Event_White.SetValues then DD_Event_White:SetValues(list) end end
 EventAPI.SetBlackMutationList  = function(list) if DD_Event_Black and DD_Event_Black.SetValues then DD_Event_Black:SetValues(list) end end
