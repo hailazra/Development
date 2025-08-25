@@ -42,8 +42,9 @@ local WindUI = loadstring(game:HttpGet(
 
 -- 2) Create Window (docs: Window:CreateWindow)
 local Window = WindUI:CreateWindow({
-    Title         = "Remnant",
-    Icon          = "layers",              -- lucide
+    Title         = ".devlogic",
+    Icon          = "brain-circuit",              -- lucide
+    Authot        = "hailazra",
     Folder        = "RemnantHub",
     Size          = UDim2.fromOffset(250, 250),
     Theme         = "Dark",
@@ -1038,9 +1039,9 @@ local PetAPI  = getgenv().RemnantUI.API.Pet
 local EggAPI  = getgenv().RemnantUI.API.Egg
 local TeamAPI = getgenv().RemnantUI.API.Team
 local ShopAPI = getgenv().RemnantUI.API.Shop
-local CraftAPI= getgenv().RemnantUI.API.Craft
+local CraftAPI = getgenv().RemnantUI.API.Craft
 local EventAPI = getgenv().RemnantUI.API.Event
-local EventAPI = getgenv().RemnantUI.API.ESP
+local ESPAPI = getgenv().RemnantUI.API.ESP
 local HomeAPI    = getgenv().RemnantUI.API.Home
 local WebhookAPI = getgenv().RemnantUI.API.Webhook
 
