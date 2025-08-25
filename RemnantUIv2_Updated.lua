@@ -31,7 +31,7 @@ end
 --======================================================
 
 -- A. Main = Tab
-local TabMain = Window:Tab({ Title = "Main", Icon = "home" })
+local TabHome = Window:Tab({ Title = "Home", Icon = "house" })
 
 -- B. Farm = Tab Section (COLLAPSIBLE)
 local SecFarm = Window:Section({ Title = "Farm", Icon = "wheat", Opened = true })
@@ -59,17 +59,13 @@ local SecMisc = Window:Section({ Title = "Misc", Icon = "settings-2", Opened = f
 local TabMisc_AUE = SecMisc:Tab({ Title = "AUE", Icon = "refresh-ccw" })
 local TabMisc_ESP = SecMisc:Tab({ Title = "ESP", Icon = "eye" })
 
--- G. Webhook = Tab
-local TabWebhook = Window:Tab({ Title = "Webhook", Icon = "globe" })
-
 --======================================================
 -- Save references
 --======================================================
 getgenv().RemnantUI = {
     Window = Window,
     Tabs = {
-        Main            = TabMain,
-        Webhook         = TabWebhook,
+        Home            = TabHome,
         -- Farm
         Farm_Plants     = TabFarm_Plants,
         Farm_Sprinkler  = TabFarm_Sprinkler,
@@ -136,6 +132,27 @@ State.Shovel = State.Shovel or {
     AutoShovelPlant     = false,
 }
 
+-- Home (Changelog, Server tools, Hop Server)
+State.Home = State.Home or {
+    ChangelogText  = "-",
+    JobID          = "",
+    AutoRejoin     = false,
+    HopServerCount = nil,   -- angka
+    AutoHopServer  = false,
+}
+
+-- Webhook (dipindah ke Tab Home)
+State.Webhook = State.Webhook or {
+    URL              = "",
+    Message          = "",
+    WhitelistPet     = {},  -- multi select (pet dari hatch egg)
+    WeightThreshold  = nil,
+    Delay            = nil,
+    Enable           = false,
+    DisconnectNotify = false,
+}
+
+
 -- Loadout / Pet / Egg
 State.Loadout = State.Loadout or { Selected = nil }
 
@@ -193,6 +210,169 @@ State.ESP = State.ESP or {
 local function setValues(control, values)
     if control and control.SetValues then control:SetValues(values) end
 end
+
+--======================================================
+-- ====================== HOME =========================
+--======================================================
+local TabHomeRef = UI.Tabs.Home
+
+-- Changelog
+TabHomeRef:Section({ Title = "Changelog", TextXAlignment = "Left", TextSize = 17 })
+
+local CH_Paragraph
+if TabHomeRef.Paragraph then
+    CH_Paragraph = TabHomeRef:Paragraph({
+        Title   = "Changes",
+        Content = State.Home.ChangelogText
+    })
+else
+    -- fallback kalau Paragraph belum ada di loader kamu
+    CH_Paragraph = TabHomeRef:Label({
+        Title   = "Changes",
+        Content = State.Home.ChangelogText
+    })
+end
+
+TabHomeRef:Button({
+    Title = ".devlogic Discord",
+    Icon  = "message-circle",
+    Callback = function()
+        -- TODO: buka/copy link discord kamu
+        -- setclipboard("https://discord.gg/xxxx") -- contoh
+    end
+})
+
+-- Server
+TabHomeRef:Section({ Title = "Server", TextXAlignment = "Left", TextSize = 17 })
+
+local IN_Server_JobID = TabHomeRef:Input({
+    Title = "JobID Server",
+    Placeholder = "e.g. 00000000-0000-0000-0000-000000000000",
+    Callback = function(text)
+        State.Home.JobID = tostring(text or "")
+    end
+})
+
+TabHomeRef:Button({
+    Title = "Join Server",
+    Icon  = "log-in",
+    Callback = function()
+        -- TODO: join by State.Home.JobID
+    end
+})
+
+TabHomeRef:Button({
+    Title = "Rejoin This Server",
+    Icon  = "rotate-ccw",
+    Callback = function()
+        -- TODO: rejoin current job
+    end
+})
+
+TabHomeRef:Button({
+    Title = "Auto Rejoin This Server",
+    Icon  = "refresh-ccw",
+    Callback = function()
+        State.Home.AutoRejoin = not State.Home.AutoRejoin
+        -- TODO: start/stop loop auto rejoin
+    end
+})
+
+TabHomeRef:Button({
+    Title = "Copy JobID",
+    Icon  = "clipboard",
+    Callback = function()
+        -- TODO: setclipboard(State.Home.JobID)
+    end
+})
+
+-- Hop Server
+TabHomeRef:Section({ Title = "Hop Server", TextXAlignment = "Left", TextSize = 17 })
+
+local IN_Hop_Count = TabHomeRef:Input({
+    Title = "Server",
+    Placeholder = "e.g. 1 (jumlah hop)",
+    Numeric = true,
+    Callback = function(v)
+        State.Home.HopServerCount = tonumber(v)
+    end
+})
+
+local TG_AutoHop = TabHomeRef:Toggle({
+    Title = "Auto Hop Server",
+    Default = false,
+    Callback = function(on)
+        State.Home.AutoHopServer = on
+        -- TODO: mulai/stop auto hop
+    end
+})
+
+-- Webhook (dipindah ke Home)
+TabHomeRef:Section({ Title = "Webhook", TextXAlignment = "Left", TextSize = 17 })
+
+local IN_Webhook_URL = TabHomeRef:Input({
+    Title = "Webhook URL",
+    Placeholder = "https://...",
+    Callback = function(text)
+        State.Webhook.URL = tostring(text or "")
+    end
+})
+
+local IN_Webhook_Message = TabHomeRef:Input({
+    Title = "Message",
+    Placeholder = "Template pesan",
+    Callback = function(text)
+        State.Webhook.Message = tostring(text or "")
+    end
+})
+
+local DD_Webhook_WhitelistPet = TabHomeRef:Dropdown({
+    Title = "Whitelist Pet",
+    Desc  = "Pet yang dipilih di sini berasal dari hasil hatch egg.",
+    Multi = true,
+    Values = {},
+    Default = {},
+    Placeholder = "Choose pets...",
+    Callback = function(list)
+        State.Webhook.WhitelistPet = list
+    end
+})
+
+local IN_Webhook_Weight = TabHomeRef:Input({
+    Title = "Weight Threshold",
+    Placeholder = "e.g. 3 (kg)",
+    Numeric = true,
+    Callback = function(v)
+        State.Webhook.WeightThreshold = tonumber(v)
+    end
+})
+
+local IN_Webhook_Delay = TabHomeRef:Input({
+    Title = "Delay",
+    Placeholder = "e.g. 5 (seconds)",
+    Numeric = true,
+    Callback = function(v)
+        State.Webhook.Delay = tonumber(v)
+    end
+})
+
+local TG_Webhook_Enable = TabHomeRef:Toggle({
+    Title = "Enable Webhook",
+    Default = false,
+    Callback = function(on)
+        State.Webhook.Enable = on
+        -- TODO: start/stop proses kirim webhook
+    end
+})
+
+local TG_Webhook_DC = TabHomeRef:Toggle({
+    Title = "Disconnection Webhook",
+    Default = false,
+    Callback = function(on)
+        State.Webhook.DisconnectNotify = on
+        -- TODO: handler disconnect -> kirim webhook
+    end
+})
 
 --======================================================
 -- ==============  FARM: Plants & Fruits  ==============
@@ -705,6 +885,8 @@ getgenv().RemnantUI.API.Shop  = getgenv().RemnantUI.API.Shop or {}
 getgenv().RemnantUI.API.Craft = getgenv().RemnantUI.API.Craft or {}
 getgenv().RemnantUI.API.Event = getgenv().RemnantUI.API.Event or {}
 getgenv().RemnantUI.API.ESP = getgenv().RemnantUI.API.ESP or {}
+getgenv().RemnantUI.API.Home    = getgenv().RemnantUI.API.Home or {}
+getgenv().RemnantUI.API.Webhook = getgenv().RemnantUI.API.Webhook or {}
 
 local FarmAPI = getgenv().RemnantUI.API.Farm
 local PetAPI  = getgenv().RemnantUI.API.Pet
@@ -713,7 +895,17 @@ local TeamAPI = getgenv().RemnantUI.API.Team
 local ShopAPI = getgenv().RemnantUI.API.Shop
 local CraftAPI= getgenv().RemnantUI.API.Craft
 local EventAPI = getgenv().RemnantUI.API.Event
-local EventAPI = getgenv().RemnantUI.API.Event
+local EventAPI = getgenv().RemnantUI.API.ESP
+local HomeAPI    = getgenv().RemnantUI.API.Home
+local WebhookAPI = getgenv().RemnantUI.API.Webhook
+
+-- Home
+HomeAPI.SetChangelog = function(text) State.Home.ChangelogText = tostring(text or "-") if CH_Paragraph and CH_Paragraph.SetContent then CH_Paragraph:SetContent(State.Home.ChangelogText)
+    end
+end
+WebhookAPI.SetWhitelistPetList = function(list) if DD_Webhook_WhitelistPet and DD_Webhook_WhitelistPet.SetValues then DD_Webhook_WhitelistPet:SetValues(list or {})
+    end
+end
 
 -- Farm: Plants
 FarmAPI.SetSeedList           = function(list) setValues(DD_Plant_Seed, list) end
@@ -724,7 +916,6 @@ FarmAPI.SetPlantList          = function(list) setValues(DD_Move_Select, list) e
 
 -- Farm: Sprinkler
 FarmAPI.SetSprinklerList      = function(list) setValues(DD_Sprinkler_Select, list) end
-
 -- Farm: Shovel
 FarmAPI.SetShovelFruitList     = function(list) setValues(DD_Shovel_Fruit, list) end
 FarmAPI.SetShovelMutationList  = function(list) setValues(DD_Shovel_WhiteMut, list) end
@@ -766,9 +957,8 @@ EventAPI.SetWhiteMutationList  = function(list) if DD_Event_White and DD_Event_W
 EventAPI.SetBlackMutationList  = function(list) if DD_Event_Black and DD_Event_Black.SetValues then DD_Event_Black:SetValues(list) end end
 
 -- ESP
-EventAPI.SetFruitList          = function(list) if DD_Event_Fruit and DD_Event_Fruit.SetValues then DD_Event_Fruit:SetValues(list) end end
-EventAPI.SetWhiteMutationList  = function(list) if DD_Event_White and DD_Event_White.SetValues then DD_Event_White:SetValues(list) end end
-EventAPI.SetBlackMutationList  = function(list) if DD_Event_Black and DD_Event_Black.SetValues then DD_Event_Black:SetValues(list) end end
+ESPAPI.SetFruitList    = function(list) if DD_ESP_Fruit and DD_ESP_Fruit.SetValues then DD_ESP_Fruit:SetValues(list) end end
+ESPAPI.SetMutationList = function(list) if DD_ESP_Mutation and DD_ESP_Mutation.SetValues then DD_ESP_Mutation:SetValues(list) end end
 
 --======================================================
 -- Pilih tab default
