@@ -1,0 +1,612 @@
+--======================================================
+-- Remnant Hub — WindUI (Docs-Compliant) + Lucide Icons
+--======================================================
+
+-- 1) Load WindUI (docs: Load latest)
+local WindUI = loadstring(game:HttpGet(
+    "https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"
+))()
+
+-- 2) Create Window (docs: Window:CreateWindow)
+local Window = WindUI:CreateWindow({
+    Title         = "Remnant",
+    Icon          = "layers",              -- lucide
+    Folder        = "RemnantHub",
+    Size          = UDim2.fromOffset(250, 250),
+    Theme         = "Dark",
+    Resizable     = false,
+    SideBarWidth  = 120,
+    HideSearchBar = true,
+})
+
+-- 3) Tag (docs: Window:Tag)
+if Color3 and Color3.fromHex then
+    Window:Tag({ Title = "In Development", Color = Color3.fromHex("#315dff") })
+else
+    Window:Tag({ Title = "In Development", Color = Color3.fromRGB(49,93,255) })
+end
+
+--======================================================
+-- Struktur GUI (Tab & Tab Section)
+--======================================================
+
+-- A. Main = Tab
+local TabMain = Window:Tab({ Title = "Main", Icon = "home" })
+
+-- B. Farm = Tab Section (COLLAPSIBLE)
+local SecFarm = Window:Section({ Title = "Farm", Icon = "wheat", Opened = true })
+local TabFarm_Plants     = SecFarm:Tab({ Title = "Plants & Fruits", Icon = "sprout" })
+local TabFarm_Sprinkler  = SecFarm:Tab({ Title = "Sprinkler",       Icon = "droplets" })
+local TabFarm_Shovel     = SecFarm:Tab({ Title = "Shovel",          Icon = "shovel" })
+
+-- C. Pet & Egg = Tab Section (COLLAPSIBLE)
+local SecPetEgg = Window:Section({ Title = "Pet & Egg", Icon = "egg", Opened = false })
+local TabLoadout = SecPetEgg:Tab({ Title = "Loadout", Icon = "users" })
+local TabPet     = SecPetEgg:Tab({ Title = "Pet",     Icon = "paw-print" })
+local TabEgg     = SecPetEgg:Tab({ Title = "Egg",     Icon = "egg" })
+
+-- D. Shop = Tab Section (COLLAPSIBLE)
+local SecShopCraft = Window:Section({ Title = "Shop", Icon = "shopping-bag", Opened = false })
+local TabShopCraft_Shop   = SecShopCraft:Tab({ Title = "Shop",   Icon = "shopping-cart" })
+local TabShopCraft_Craft  = SecShopCraft:Tab({ Title = "Craft",  Icon = "settings" })
+
+-- E. Event = Tab Section (COLLAPSIBLE)
+local SecEvent = Window:Section({ Title = "Event", Icon = "calendar-days", Opened = false })
+local TabEvent_Auto  = SecEvent:Tab({ Title = "Auto Event", Icon = "zap" })
+local TabEvent_Claim = SecEvent:Tab({ Title = "Auto Claim", Icon = "package" })
+
+-- F. Misc = Tab Section (COLLAPSIBLE)
+local SecMisc = Window:Section({ Title = "Misc", Icon = "settings-2", Opened = false })
+local TabMisc_AUE = SecMisc:Tab({ Title = "AUE", Icon = "refresh-ccw" })
+local TabMisc_ESP = SecMisc:Tab({ Title = "ESP", Icon = "eye" })
+
+-- G. Webhook = Tab
+local TabWebhook = Window:Tab({ Title = "Webhook", Icon = "globe" })
+
+--======================================================
+-- Save references
+--======================================================
+getgenv().RemnantUI = {
+    Window = Window,
+    Tabs = {
+        Main            = TabMain,
+        Webhook         = TabWebhook,
+        -- Farm
+        Farm_Plants     = TabFarm_Plants,
+        Farm_Sprinkler  = TabFarm_Sprinkler,
+        Farm_Shovel     = TabFarm_Shovel,
+        -- Pet & Egg
+        Loadout         = TabLoadout,
+        TeamSwitch      = TabLoadout, -- alias lama supaya kompatibel
+        Pet             = TabPet,
+        Egg             = TabEgg,
+        -- Shop & Craft
+        Shop_Shop       = TabShopCraft_Shop,
+        Shop_Craft      = TabShopCraft_Craft,
+        -- Event
+        Event_Auto      = TabEvent_Auto,
+        Event_Claim     = TabEvent_Claim,
+        -- Misc
+        Misc_AUE        = TabMisc_AUE,
+        Misc_ESP        = TabMisc_ESP,
+    },
+    Sections = { Farm = SecFarm, PetEgg = SecPetEgg, Shop = SecShopCraft, Event = SecEvent, Misc = SecMisc }
+}
+
+--======================================================
+-- Global State
+--======================================================
+getgenv().RemnantState = getgenv().RemnantState or {}
+local State = getgenv().RemnantState
+
+-- Plants
+State.Plants = State.Plants or {
+    SeedsSelected       = {},
+    PositionsSelected   = {},     -- multi: Player/Random/Custom
+    AutoPlant           = false,
+
+    FruitsSelected      = {},
+    WhiteMutation       = {},
+    BlackMutation       = {},
+    WeightThreshold     = nil,
+    AutoCollect         = false,
+
+    MovePlantSelected   = nil,    -- single
+    MovePositions       = {},     -- multi: Player/Random
+    AutoMove            = false,
+}
+
+-- Sprinkler
+State.Sprinkler = State.Sprinkler or {
+    SprinklersSelected  = {},
+    PositionSelected    = nil,    -- "Player" | "Nearest Plant"
+    AutoPlace           = false,  -- explicit toggle kept in UI below
+}
+
+-- Shovel
+State.Shovel = State.Shovel or {
+    FruitsSelected      = {},
+    MutationsSelected   = {},     -- whitelist
+    BlacklistMutations  = {},     -- blacklist
+    WeightThreshold     = nil,
+    AutoShovelFruit     = false,
+
+    SprinklersSelected  = {},
+    AutoShovelSprinkler = false,
+
+    PlantsSelected      = {},
+    AutoShovelPlant     = false,
+}
+
+-- Loadout / Pet / Egg
+State.Loadout = State.Loadout or { Selected = nil }
+
+State.Pet = State.Pet or {
+    PetsForBoost        = {},     BoostsSelected = {},   AutoBoost  = false,
+    PetsForFav          = {},     FavWeightThresh = nil, FavAgeThresh = nil, AutoFavorite = false,
+    PetsForSell         = {},     SellBlacklistMutation = {}, SellWeightThresh = nil, SellAgeThresh = nil, AutoSell = false,
+}
+
+State.Egg = State.Egg or {
+    EggsToPlace = {}, SlotEgg = nil, AutoPlaceEgg = false,
+    EggsToHatch = {}, HatchDelay = nil, AutoHatchEgg = false,
+}
+
+-- Shop: Buy
+State.Shop = State.Shop or {
+    Seed = { Selected = {}, Auto = false },
+    Gear = { Selected = {}, Auto = false },
+    Egg  = { Selected = {}, Auto = false },
+    Merchant = { Merchants = {}, Items = {}, Auto = false },
+    Cosmetic = { Selected = {}, Auto = false },
+    Event = { Items = {}, Auto = false },
+}
+
+-- Craft
+State.Craft = State.Craft or {
+    Gear  = { Selected = {}, Auto = false },
+    Seed  = { Selected = {}, Auto = false },
+    Event = { Selected = {}, Auto = false },
+}
+
+--======================================================
+-- Helpers
+--======================================================
+local function setValues(control, values)
+    if control and control.SetValues then control:SetValues(values) end
+end
+
+--======================================================
+-- ==============  FARM: Plants & Fruits  ==============
+--======================================================
+local UI = getgenv().RemnantUI
+local TabPlants     = UI.Tabs.Farm_Plants
+local TabSprinkler  = UI.Tabs.Farm_Sprinkler
+local TabShovel     = UI.Tabs.Farm_Shovel
+
+-- "Plant"
+TabPlants:Section({ Title = "Plant", TextXAlignment = "Left", TextSize = 17 })
+local DD_Plant_Seed = TabPlants:Dropdown({
+    Title = "Select Seed", Multi = true, Values = {}, Default = {}, Placeholder = "Choose seeds...",
+    Callback = function(list) State.Plants.SeedsSelected = list end
+})
+local DD_Plant_Pos = TabPlants:Dropdown({
+    Title = "Position", Multi = true, Values = { "Player", "Random" }, Default = { "Player" },
+    Callback = function(list) State.Plants.PositionsSelected = list end
+})
+local TG_AutoPlant = TabPlants:Toggle({
+    Title = "Auto Plant", Default = false,
+    Callback = function(on) State.Plants.AutoPlant = on end
+})
+
+-- "Harvest"
+TabPlants:Section({ Title = "Harvest", TextXAlignment = "Left", TextSize = 17 })
+local DD_Harvest_Fruit = TabPlants:Dropdown({
+    Title = "Select Fruit", Multi = true, Values = {}, Default = {}, Placeholder = "Choose fruits...",
+    Callback = function(list) State.Plants.FruitsSelected = list end
+})
+local DD_Harvest_White = TabPlants:Dropdown({
+    Title = "Whitelist Mutation", Multi = true, Values = {}, Default = {}, Placeholder = "Whitelist mutations...",
+    Callback = function(list) State.Plants.WhiteMutation = list end
+})
+local DD_Harvest_Black = TabPlants:Dropdown({
+    Title = "Blacklist Mutation", Multi = true, Values = {}, Default = {}, Placeholder = "Blacklist mutations...",
+    Callback = function(list) State.Plants.BlackMutation = list end
+})
+local IN_Harvest_Weight = TabPlants:Input({
+    Title = "Weight Threshold", Placeholder = "e.g. 3 (kg)", Numeric = true,
+    Callback = function(v) State.Plants.WeightThreshold = tonumber(v) end
+})
+local TG_AutoCollect = TabPlants:Toggle({
+    Title = "Auto Collect", Default = false,
+    Callback = function(on) State.Plants.AutoCollect = on end
+})
+
+-- "Move Plant"
+TabPlants:Section({ Title = "Move Plant", TextXAlignment = "Left", TextSize = 17 })
+local DD_Move_Select = TabPlants:Dropdown({
+    Title = "Select Plant", Multi = false, Values = {}, Default = nil, Placeholder = "Choose a plant...",
+    Callback = function(v) State.Plants.MovePlantSelected = v end
+})
+local DD_Move_Pos = TabPlants:Dropdown({
+    Title = "Position", Multi = true, Values = { "Player", "Random" }, Default = { "Player" },
+    Callback = function(list) State.Plants.MovePositions = list end
+})
+local TG_AutoMove = TabPlants:Toggle({
+    Title = "Auto Move", Default = false,
+    Callback = function(on) State.Plants.AutoMove = on end
+})
+
+--======================================================
+-- ==============  FARM: Sprinkler  ====================
+--======================================================
+TabSprinkler:Section({ Title = "Auto Place", TextXAlignment = "Left", TextSize = 17 })
+local DD_Sprinkler_Select = TabSprinkler:Dropdown({
+    Title = "Select Sprinkler",
+    Multi = true,
+    Values = {},
+    Default = {},
+    Placeholder = "Choose sprinkler types...",
+    Callback = function(list)
+        State.Sprinkler.SprinklersSelected = list
+    end
+})
+local DD_Sprinkler_Pos = TabSprinkler:Dropdown({
+    Title = "Position",
+    Multi = false,
+    Values = { "Player", "Nearest Plant" },
+    Default = "Nearest Plant",
+    Callback = function(v)
+        State.Sprinkler.PositionSelected = v
+    end
+})
+local TG_Sprinkler_AutoPlace = TabSprinkler:Toggle({
+    Title   = "Auto Place Sprinkler",
+    Desc    = "Letakkan sprinkler otomatis di plot (default OFF).",
+    Default = false,
+    Callback = function(on)
+        State.Sprinkler.AutoPlace = on
+    end
+})
+
+--======================================================
+-- ==============  FARM: Shovel  =======================
+--======================================================
+TabShovel:Section({ Title = "Fruit", TextXAlignment = "Left", TextSize = 17 })
+local DD_Shovel_Fruit = TabShovel:Dropdown({
+    Title = "Select Fruit", Multi = true, Values = {}, Default = {}, Placeholder = "Choose fruits...",
+    Callback = function(list) State.Shovel.FruitsSelected = list end
+})
+local DD_Shovel_WhiteMut = TabShovel:Dropdown({
+    Title = "Select Mutation", Multi = true, Values = {}, Default = {}, Placeholder = "Whitelist mutations...",
+    Callback = function(list) State.Shovel.MutationsSelected = list end
+})
+local DD_Shovel_BlackMut = TabShovel:Dropdown({
+    Title = "Blacklist Mutation", Multi = true, Values = {}, Default = {}, Placeholder = "Blacklist mutations...",
+    Callback = function(list) State.Shovel.BlacklistMutations = list end
+})
+local IN_Shovel_Weight = TabShovel:Input({
+    Title = "Weight Threshold", Placeholder = "e.g. 3 (kg)", Numeric = true,
+    Callback = function(v) State.Shovel.WeightThreshold = tonumber(v) end
+})
+local TG_Shovel_Fruit = TabShovel:Toggle({
+    Title = "Shovel Fruit", Default = false,
+    Callback = function(on) State.Shovel.AutoShovelFruit = on end
+})
+
+TabShovel:Section({ Title = "Sprinkler", TextXAlignment = "Left", TextSize = 17 })
+local DD_Shovel_Sprinkler = TabShovel:Dropdown({
+    Title = "Select Sprinkler", Multi = true, Values = {}, Default = {}, Placeholder = "Choose sprinklers...",
+    Callback = function(list) State.Shovel.SprinklersSelected = list end
+})
+local TG_Shovel_Sprinkler = TabShovel:Toggle({
+    Title = "Shovel Sprinkler", Default = false,
+    Callback = function(on) State.Shovel.AutoShovelSprinkler = on end
+})
+
+TabShovel:Section({ Title = "Plant", TextXAlignment = "Left", TextSize = 17 })
+local DD_Shovel_Plant = TabShovel:Dropdown({
+    Title = "Select Plant", Multi = true, Values = {}, Default = {}, Placeholder = "Choose plants...",
+    Callback = function(list) State.Shovel.PlantsSelected = list end
+})
+local TG_Shovel_Plant = TabShovel:Toggle({
+    Title = "Shovel Plant", Default = false,
+    Callback = function(on) State.Shovel.AutoShovelPlant = on end
+})
+
+--======================================================
+-- ==============  PET & EGG: Loadout  =================
+--======================================================
+local TabLoadoutRef = UI.Tabs.Loadout
+TabLoadoutRef:Section({ Title = "Loadout", TextXAlignment = "Left", TextSize = 17 })
+local DD_Loadout_Select = TabLoadoutRef:Dropdown({
+    Title = "Select Loadout", Multi = false, Values = {}, Default = nil, Placeholder = "Choose a loadout...",
+    Callback = function(v) State.Loadout.Selected = v end
+})
+TabLoadoutRef:Button({
+    Title = "Switch Loadout", Icon = "swap-horizontal",
+    Callback = function()
+        -- TODO: panggil remote swap berdasarkan State.Loadout.Selected
+    end
+})
+
+--======================================================
+-- ==============  PET & EGG: Pet  =====================
+--======================================================
+local TabPetRef = UI.Tabs.Pet
+
+TabPetRef:Section({ Title = "Boost Pet", TextXAlignment = "Left", TextSize = 17 })
+local DD_Pet_SelectBoost = TabPetRef:Dropdown({
+    Title = "Select Pet", Multi = true, Values = {}, Default = {}, Placeholder = "Choose pets...",
+    Callback = function(list) State.Pet.PetsForBoost = list end
+})
+local DD_Pet_Boost = TabPetRef:Dropdown({
+    Title = "Select Boost", Multi = true, Values = {}, Default = {}, Placeholder = "Choose boosts...",
+    Callback = function(list) State.Pet.BoostsSelected = list end
+})
+local TG_Pet_AutoBoost = TabPetRef:Toggle({
+    Title = "Auto Boost Pet", Default = false,
+    Callback = function(on) State.Pet.AutoBoost = on end
+})
+
+TabPetRef:Section({ Title = "Favorite Pet", TextXAlignment = "Left", TextSize = 17 })
+local DD_Pet_SelectFav = TabPetRef:Dropdown({
+    Title = "Select Pet", Multi = true, Values = {}, Default = {}, Placeholder = "Choose pets...",
+    Callback = function(list) State.Pet.PetsForFav = list end
+})
+local IN_Pet_FavWeight = TabPetRef:Input({
+    Title = "Weight Threshold", Placeholder = "e.g. 3 (kg)", Numeric = true,
+    Callback = function(v) State.Pet.FavWeightThresh = tonumber(v) end
+})
+local IN_Pet_FavAge = TabPetRef:Input({
+    Title = "Age Threshold", Placeholder = "e.g. 2 (age)", Numeric = true,
+    Callback = function(v) State.Pet.FavAgeThresh = tonumber(v) end
+})
+local TG_Pet_AutoFav = TabPetRef:Toggle({
+    Title = "Auto Favorite Pet", Default = false,
+    Callback = function(on) State.Pet.AutoFavorite = on end
+})
+
+TabPetRef:Section({ Title = "Sell Pet", TextXAlignment = "Left", TextSize = 17 })
+local DD_Pet_SelectSell = TabPetRef:Dropdown({
+    Title = "Select Pet", Multi = true, Values = {}, Default = {}, Placeholder = "Choose pets...",
+    Callback = function(list) State.Pet.PetsForSell = list end
+})
+local DD_Pet_Blacklist = TabPetRef:Dropdown({
+    Title = "Blacklist Pet Mutation", Multi = true, Values = {}, Default = {}, Placeholder = "Blacklist mutations...",
+    Callback = function(list) State.Pet.SellBlacklistMutation = list end
+})
+local IN_Pet_SellWeight = TabPetRef:Input({
+    Title = "Weight Threshold", Placeholder = "e.g. 3 (kg)", Numeric = true,
+    Callback = function(v) State.Pet.SellWeightThresh = tonumber(v) end
+})
+local IN_Pet_SellAge = TabPetRef:Input({
+    Title = "Age Threshold", Placeholder = "e.g. 2 (age)", Numeric = true,
+    Callback = function(v) State.Pet.SellAgeThresh = tonumber(v) end
+})
+local TG_Pet_AutoSell = TabPetRef:Toggle({
+    Title = "Auto Sell Pet", Default = false,
+    Callback = function(on) State.Pet.AutoSell = on end
+})
+
+--======================================================
+-- ==============  PET & EGG: Egg  =====================
+--======================================================
+local TabEggRef = UI.Tabs.Egg
+
+TabEggRef:Section({ Title = "Place Egg", TextXAlignment = "Left", TextSize = 17 })
+local DD_Egg_SelectPlace = TabEggRef:Dropdown({
+    Title = "Select Egg", Multi = true, Values = {}, Default = {}, Placeholder = "Choose eggs...",
+    Callback = function(list) State.Egg.EggsToPlace = list end
+})
+local IN_Egg_Slot = TabEggRef:Input({
+    Title = "Slot Egg", Placeholder = "e.g. 8", Numeric = true,
+    Callback = function(v) State.Egg.SlotEgg = tonumber(v) end
+})
+TabEggRef:Button({
+    Title = "Refresh Egg", Icon = "refresh-ccw",
+    Callback = function()
+        -- TODO: refresh daftar egg (inventory)
+    end
+})
+local TG_Egg_AutoPlace = TabEggRef:Toggle({
+    Title = "Auto Place Egg", Default = false,
+    Callback = function(on) State.Egg.AutoPlaceEgg = on end
+})
+
+TabEggRef:Section({ Title = "Hatch Egg", TextXAlignment = "Left", TextSize = 17 })
+local DD_Egg_SelectHatch = TabEggRef:Dropdown({
+    Title = "Select Egg", Multi = true, Values = {}, Default = {}, Placeholder = "Choose eggs...",
+    Callback = function(list) State.Egg.EggsToHatch = list end
+})
+local IN_Egg_HatchDelay = TabEggRef:Input({
+    Title = "Hatch Delay", Placeholder = "e.g. 5 (seconds)", Numeric = true,
+    Callback = function(v) State.Egg.HatchDelay = tonumber(v) end
+})
+local TG_Egg_AutoHatch = TabEggRef:Toggle({
+    Title = "Auto Hatch Egg", Default = false,
+    Callback = function(on) State.Egg.AutoHatchEgg = on end
+})
+
+--======================================================
+-- ================= SHOP: BUY  ========================
+--======================================================
+local TabShopRef = UI.Tabs.Shop_Shop
+
+-- Seed
+TabShopRef:Section({ Title = "Seed", TextXAlignment = "Left", TextSize = 17 })
+local DD_Shop_Seed = TabShopRef:Dropdown({
+    Title = "Select Seed", Multi = true, Values = {}, Default = {}, Placeholder = "Choose seeds...",
+    Callback = function(list) State.Shop.Seed.Selected = list end
+})
+local TG_Shop_AutoSeed = TabShopRef:Toggle({
+    Title = "Auto Buy Seed", Default = false,
+    Callback = function(on) State.Shop.Seed.Auto = on end
+})
+
+-- Gear
+TabShopRef:Section({ Title = "Gear", TextXAlignment = "Left", TextSize = 17 })
+local DD_Shop_Gear = TabShopRef:Dropdown({
+    Title = "Select Gear", Multi = true, Values = {}, Default = {}, Placeholder = "Choose gear...",
+    Callback = function(list) State.Shop.Gear.Selected = list end
+})
+local TG_Shop_AutoGear = TabShopRef:Toggle({
+    Title = "Auto Buy Gear", Default = false,
+    Callback = function(on) State.Shop.Gear.Auto = on end
+})
+
+-- Egg
+TabShopRef:Section({ Title = "Egg", TextXAlignment = "Left", TextSize = 17 })
+local DD_Shop_Egg = TabShopRef:Dropdown({
+    Title = "Select Egg", Multi = true, Values = {}, Default = {}, Placeholder = "Choose eggs...",
+    Callback = function(list) State.Shop.Egg.Selected = list end
+})
+local TG_Shop_AutoEgg = TabShopRef:Toggle({
+    Title = "Auto Buy Egg", Default = false,
+    Callback = function(on) State.Shop.Egg.Auto = on end
+})
+
+-- Merchant
+TabShopRef:Section({ Title = "Merchant", TextXAlignment = "Left", TextSize = 17 })
+local DD_Shop_Merchant = TabShopRef:Dropdown({
+    Title = "Select Merchant", Multi = true, Values = {}, Default = {}, Placeholder = "Choose merchants...",
+    Callback = function(list) State.Shop.Merchant.Merchants = list end
+})
+local DD_Shop_MerchantItem = TabShopRef:Dropdown({
+    Title = "Select Item", Multi = true, Values = {}, Default = {}, Placeholder = "Choose items...",
+    Callback = function(list) State.Shop.Merchant.Items = list end
+})
+local TG_Shop_AutoMerchant = TabShopRef:Toggle({
+    Title = "Auto Buy Merchant Item", Default = false,
+    Callback = function(on) State.Shop.Merchant.Auto = on end
+})
+
+-- Cosmetic
+TabShopRef:Section({ Title = "Cosmetic", TextXAlignment = "Left", TextSize = 17 })
+local DD_Shop_Cosmetic = TabShopRef:Dropdown({
+    Title = "Select Cosmetic", Multi = true, Values = {}, Default = {}, Placeholder = "Choose cosmetics...",
+    Callback = function(list) State.Shop.Cosmetic.Selected = list end
+})
+local TG_Shop_AutoCosmetic = TabShopRef:Toggle({
+    Title = "Auto Buy Cosmetic", Default = false,
+    Callback = function(on) State.Shop.Cosmetic.Auto = on end
+})
+
+-- Event
+TabShopRef:Section({ Title = "Event", TextXAlignment = "Left", TextSize = 17 })
+local DD_Shop_EventItem = TabShopRef:Dropdown({
+    Title = "Select Item", Multi = true, Values = {}, Default = {}, Placeholder = "Choose event items...",
+    Callback = function(list) State.Shop.Event.Items = list end
+})
+local TG_Shop_AutoEvent = TabShopRef:Toggle({
+    Title = "Auto Buy Event Item", Default = false,
+    Callback = function(on) State.Shop.Event.Auto = on end
+})
+
+--======================================================
+-- ================= CRAFT: MAKE  ======================
+--======================================================
+local TabCraftRef = UI.Tabs.Shop_Craft
+
+-- Gear
+TabCraftRef:Section({ Title = "Gear", TextXAlignment = "Left", TextSize = 17 })
+local DD_Craft_Gear = TabCraftRef:Dropdown({
+    Title = "Select Gear", Multi = true, Values = {}, Default = {}, Placeholder = "Choose craftable gear...",
+    Callback = function(list) State.Craft.Gear.Selected = list end
+})
+local TG_Craft_AutoGear = TabCraftRef:Toggle({
+    Title = "Auto Craft Gear", Default = false,
+    Callback = function(on) State.Craft.Gear.Auto = on end
+})
+
+-- Seed
+TabCraftRef:Section({ Title = "Seed", TextXAlignment = "Left", TextSize = 17 })
+local DD_Craft_Seed = TabCraftRef:Dropdown({
+    Title = "Select Seed", Multi = true, Values = {}, Default = {}, Placeholder = "Choose craftable seeds...",
+    Callback = function(list) State.Craft.Seed.Selected = list end
+})
+local TG_Craft_AutoSeed = TabCraftRef:Toggle({
+    Title = "Auto Craft Seed", Default = false,
+    Callback = function(on) State.Craft.Seed.Auto = on end
+})
+
+-- Event
+TabCraftRef:Section({ Title = "Event", TextXAlignment = "Left", TextSize = 17 })
+local DD_Craft_Event = TabCraftRef:Dropdown({
+    Title = "Select Craftable", Multi = true, Values = {}, Default = {}, Placeholder = "Choose craftables...",
+    Callback = function(list) State.Craft.Event.Selected = list end
+})
+local TG_Craft_AutoEvent = TabCraftRef:Toggle({
+    Title = "Auto Craft Event", Default = false,
+    Callback = function(on) State.Craft.Event.Auto = on end
+})
+
+--======================================================
+-- API: update isi dropdown dari luar (dinamis)
+--======================================================
+getgenv().RemnantUI.API       = getgenv().RemnantUI.API or {}
+getgenv().RemnantUI.API.Farm  = getgenv().RemnantUI.API.Farm or {}
+getgenv().RemnantUI.API.Pet   = getgenv().RemnantUI.API.Pet or {}
+getgenv().RemnantUI.API.Egg   = getgenv().RemnantUI.API.Egg or {}
+getgenv().RemnantUI.API.Team  = getgenv().RemnantUI.API.Team or {}
+getgenv().RemnantUI.API.Shop  = getgenv().RemnantUI.API.Shop or {}
+getgenv().RemnantUI.API.Craft = getgenv().RemnantUI.API.Craft or {}
+
+local FarmAPI = getgenv().RemnantUI.API.Farm
+local PetAPI  = getgenv().RemnantUI.API.Pet
+local EggAPI  = getgenv().RemnantUI.API.Egg
+local TeamAPI = getgenv().RemnantUI.API.Team
+local ShopAPI = getgenv().RemnantUI.API.Shop
+local CraftAPI= getgenv().RemnantUI.API.Craft
+
+-- Farm: Plants
+FarmAPI.SetSeedList           = function(list) setValues(DD_Plant_Seed, list) end
+FarmAPI.SetFruitList          = function(list) setValues(DD_Harvest_Fruit, list) end
+FarmAPI.SetWhiteMutationList  = function(list) setValues(DD_Harvest_White, list) end
+FarmAPI.SetBlackMutationList  = function(list) setValues(DD_Harvest_Black, list) end
+FarmAPI.SetPlantList          = function(list) setValues(DD_Move_Select, list) end
+
+-- Farm: Sprinkler
+FarmAPI.SetSprinklerList      = function(list) setValues(DD_Sprinkler_Select, list) end
+
+-- Farm: Shovel
+FarmAPI.SetShovelFruitList     = function(list) setValues(DD_Shovel_Fruit, list) end
+FarmAPI.SetShovelMutationList  = function(list) setValues(DD_Shovel_WhiteMut, list) end
+FarmAPI.SetShovelBlacklistList = function(list) setValues(DD_Shovel_BlackMut, list) end
+FarmAPI.SetShovelSprinklerList = function(list) setValues(DD_Shovel_Sprinkler, list) end
+FarmAPI.SetShovelPlantList     = function(list) setValues(DD_Shovel_Plant, list) end
+
+-- Team / Loadout
+TeamAPI.SetLoadoutList = function(list) setValues(DD_Loadout_Select, list) end
+
+-- Pet
+PetAPI.SetPetListForBoost   = function(list) setValues(DD_Pet_SelectBoost, list) end
+PetAPI.SetBoostList         = function(list) setValues(DD_Pet_Boost, list) end
+PetAPI.SetPetListForFav     = function(list) setValues(DD_Pet_SelectFav, list) end
+PetAPI.SetPetListForSell    = function(list) setValues(DD_Pet_SelectSell, list) end
+PetAPI.SetSellBlacklistList = function(list) setValues(DD_Pet_Blacklist, list) end
+
+-- Egg
+EggAPI.SetEggListForPlace   = function(list) setValues(DD_Egg_SelectPlace, list) end
+EggAPI.SetEggListForHatch   = function(list) setValues(DD_Egg_SelectHatch, list) end
+
+-- Shop (Buy)
+ShopAPI.SetSeedList         = function(list) setValues(DD_Shop_Seed, list) end
+ShopAPI.SetGearList         = function(list) setValues(DD_Shop_Gear, list) end
+ShopAPI.SetEggList          = function(list) setValues(DD_Shop_Egg, list) end
+ShopAPI.SetMerchantList     = function(list) setValues(DD_Shop_Merchant, list) end
+ShopAPI.SetMerchantItemList = function(list) setValues(DD_Shop_MerchantItem, list) end
+ShopAPI.SetCosmeticList     = function(list) setValues(DD_Shop_Cosmetic, list) end
+ShopAPI.SetEventItemList    = function(list) setValues(DD_Shop_EventItem, list) end
+
+-- Craft
+CraftAPI.SetCraftGearList   = function(list) setValues(DD_Craft_Gear, list) end
+CraftAPI.SetCraftSeedList   = function(list) setValues(DD_Craft_Seed, list) end
+CraftAPI.SetCraftEventList  = function(list) setValues(DD_Craft_Event, list) end
+
+--======================================================
+-- Pilih tab default
+--======================================================
+Window:SelectTab(1)
+
+return getgenv().RemnantUI
