@@ -615,9 +615,9 @@ local TG_Event_AutoCollect = TabEventRef:Toggle({
     end
 })
 
---======================================================
--- ==============  MISC: ESP  ==========================
---======================================================
+-- ======================================================
+-- ==============  MISC : ESP  ==========================
+-- ======================================================
 local TabESPRef = UI.Tabs.Misc_ESP
 
 -- "Fruit" section
@@ -703,7 +703,7 @@ getgenv().RemnantUI.API.Egg   = getgenv().RemnantUI.API.Egg or {}
 getgenv().RemnantUI.API.Team  = getgenv().RemnantUI.API.Team or {}
 getgenv().RemnantUI.API.Shop  = getgenv().RemnantUI.API.Shop or {}
 getgenv().RemnantUI.API.Craft = getgenv().RemnantUI.API.Craft or {}
-etgenv().RemnantUI.API.Event = getgenv().RemnantUI.API.Event or {}
+getgenv().RemnantUI.API.Event = getgenv().RemnantUI.API.Event or {}
 getgenv().RemnantUI.API.ESP = getgenv().RemnantUI.API.ESP or {}
 
 local FarmAPI = getgenv().RemnantUI.API.Farm
