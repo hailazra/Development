@@ -248,13 +248,88 @@ State.ESP = State.ESP or {
     ESPPet           = false,
 }
 
---======================================================
--- Feature URLs (raw)
---======================================================
-getgenv().RemnantFeatures = getgenv().RemnantFeatures or {
-    PlaceEgg = "https://raw.githubusercontent.com/hailazra/Development/refs/heads/main/AutoPlaceSelected_v8.lua",
-    -- Tambah fitur lain di sini...
-}
+-- ===== Feature registry (URL modul eksternal) =====
+getgenv().RemnantFeatures = getgenv().RemnantFeatures or {}
+getgenv().RemnantFeatures.AutoCollectFruit = "https://raw.githubusercontent.com/hailazra/Development/refs/heads/main/Features/AutoCollect.lua"  -- ganti ke raw URL kamu
+
+-- ===== API helper utk isi dropdown dari modul =====
+do
+  local UI  = getgenv().RemnantUI
+  local C   = UI.Controls
+  local function setValuesSafe(ctrl, values)
+    if ctrl and ctrl.SetValues and type(values) == "table" then
+      ctrl:SetValues(values)
+    end
+  end
+
+  getgenv().RemnantUI.API.Farm.SetFruitList = function(list)
+    setValuesSafe(C.DD_Harvest_Fruit, list)
+    setValuesSafe(C.DD_Shovel_Fruit,  list)
+    setValuesSafe(C.DD_Event_Fruit,   list)
+  end
+
+  getgenv().RemnantUI.API.Farm.SetMutationLists = function(list)
+    setValuesSafe(C.DD_Harvest_White, list)
+    setValuesSafe(C.DD_Harvest_Black, list)
+    setValuesSafe(C.DD_Shovel_WhiteMut, list)
+    setValuesSafe(C.DD_Shovel_BlackMut, list)
+    setValuesSafe(C.DD_ESP_Mutation, list)
+    setValuesSafe(C.DD_Event_White, list)
+    setValuesSafe(C.DD_Event_Black, list)
+  end
+end
+
+-- ===== Handler: Auto Collect Fruit =====
+local function buildFruitCFGFromState()
+  local S = getgenv().RemnantState
+  local P = S.Plants
+  return {
+    Run               = true,
+    ScanInterval      = 0.10,
+    RateLimitPerFruit = 1.25,
+    MaxConcurrent     = 3,
+    UseOwnerFilter    = true,
+    SelectedFruits    = P.FruitsSelected or {},
+    WeightMin         = tonumber(P.WeightThreshold) or 0.0,  -- dari 1 input => pakai sbg Min
+    WeightMax         = math.huge,                           -- Max dibebaskan
+    MutationWhitelist = P.WhiteMutation or {},
+    MutationBlacklist = P.BlackMutation or {},
+    Debug             = true,
+  }
+end
+
+local function startAutoCollectFruit()
+  local G = getgenv()
+  G.FruitCollectCFG = buildFruitCFGFromState()
+
+  local url = (G.RemnantFeatures and G.RemnantFeatures.AutoCollectFruit)
+              or "RAW_URL/AutoCollectFruit_v1.lua"
+  local ok, err = pcall(function()
+    loadstring(game:HttpGet(url))()
+  end)
+  if not ok then warn("[AutoCollectFruit] load error:", err) return end
+
+  -- Setelah modul load, sinkronisasi list dropdown dari modul (jika modul expose)
+  local FC = rawget(G, "FruitCollector")
+  if FC and FC.Lists then
+    local lists = FC.Lists
+    if lists.FruitNames then getgenv().RemnantUI.API.Farm.SetFruitList(lists.FruitNames) end
+    if lists.Mutations  then getgenv().RemnantUI.API.Farm.SetMutationLists(lists.Mutations) end
+  end
+
+  -- Stop otomatis kalau GUI ditutup
+  local ui = rawget(G, "RemnantUI")
+  if ui and ui.StopAllEvent then
+    -- modulmu sudah mendengar StopAllEvent; tidak perlu apa-apa di sini
+  end
+end
+
+local function stopAutoCollectFruit()
+  local G = getgenv()
+  if G.FruitCollector and G.FruitCollector.Kill then
+    G.FruitCollector.Kill()
+  end
+end
 
 
 --======================================================
@@ -480,24 +555,44 @@ local TG_AutoPlant = TabPlants:Toggle({
 TabPlants:Section({ Title = "Harvest", TextXAlignment = "Left", TextSize = 17 })
 local DD_Harvest_Fruit = TabPlants:Dropdown({
     Title = "Select Fruit", Multi = true, Values = {}, Default = {}, Placeholder = "Choose fruits...",
-    Callback = function(list) State.Plants.FruitsSelected = list end
+   Callback = function(list)
+  State.Plants.FruitsSelected = list
+  if getgenv().FruitCollectCFG then getgenv().FruitCollectCFG.SelectedFruits = list end
+end
 })
 local DD_Harvest_White = TabPlants:Dropdown({
     Title = "Whitelist Mutation", Multi = true, Values = {}, Default = {}, Placeholder = "Whitelist mutations...",
-    Callback = function(list) State.Plants.WhiteMutation = list end
+    Callback = function(list)
+  State.Plants.WhiteMutation = list
+  if getgenv().FruitCollectCFG then getgenv().FruitCollectCFG.MutationWhitelist = list end
+end
 })
 local DD_Harvest_Black = TabPlants:Dropdown({
     Title = "Blacklist Mutation", Multi = true, Values = {}, Default = {}, Placeholder = "Blacklist mutations...",
-    Callback = function(list) State.Plants.BlackMutation = list end
+    Callback = function(list)
+  State.Plants.BlackMutation = list
+  if getgenv().FruitCollectCFG then getgenv().FruitCollectCFG.MutationBlacklist = list end
+end
 })
 local IN_Harvest_Weight = TabPlants:Input({
     Title = "Weight Threshold", Placeholder = "e.g. 3 (kg)", Numeric = true,
-    Callback = function(v) State.Plants.WeightThreshold = tonumber(v) end
+    Callback = function(v)
+  State.Plants.WeightThreshold = tonumber(v)
+  if getgenv().FruitCollectCFG then getgenv().FruitCollectCFG.WeightMin = tonumber(v) or 0.0 end
+end
 })
 local TG_AutoCollect = TabPlants:Toggle({
-    Title = "Auto Collect", Default = false,
-    Callback = function(on) State.Plants.AutoCollect = on end
+  Title = "Auto Collect", Default = false,
+  Callback = function(on)
+    State.Plants.AutoCollect = on
+    if on then
+      startAutoCollectFruit()
+    else
+      stopAutoCollectFruit()
+    end
+  end
 })
+
 
 -- "Move Plant"
 TabPlants:Section({ Title = "Move Plant", TextXAlignment = "Left", TextSize = 17 })
