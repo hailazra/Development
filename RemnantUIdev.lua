@@ -262,23 +262,6 @@ do
     end
   end
 
-    getgenv().RemnantUI.API.Farm.SetFruitList = function(list)
-    setValuesSafe(C.DD_Harvest_Fruit, list)
-    setValuesSafe(C.DD_Shovel_Fruit,  list)
-    setValuesSafe(C.DD_Event_Fruit,   list)
-  end
-
-  getgenv().RemnantUI.API.Farm.SetMutationLists = function(list)
-    setValuesSafe(C.DD_Harvest_White, list)
-    setValuesSafe(C.DD_Harvest_Black, list)
-    setValuesSafe(C.DD_Shovel_WhiteMut, list)
-    setValuesSafe(C.DD_Shovel_BlackMut, list)
-    setValuesSafe(C.DD_ESP_Mutation, list)
-    setValuesSafe(C.DD_Event_White, list)
-    setValuesSafe(C.DD_Event_Black, list)
-  end
-end
-
 -- ===== Handler: Auto Collect Fruit =====
 local function buildFruitCFGFromState()
   local S = getgenv().RemnantState
@@ -1151,6 +1134,23 @@ local EventAPI = getgenv().RemnantUI.API.Event
 local ESPAPI = getgenv().RemnantUI.API.ESP
 local HomeAPI    = getgenv().RemnantUI.API.Home
 local WebhookAPI = getgenv().RemnantUI.API.Webhook
+
+ getgenv().RemnantUI.API.Farm.SetFruitList = function(list)
+    setValuesSafe(C.DD_Harvest_Fruit, list)
+    setValuesSafe(C.DD_Shovel_Fruit,  list)
+    setValuesSafe(C.DD_Event_Fruit,   list)
+  end
+
+  getgenv().RemnantUI.API.Farm.SetMutationLists = function(list)
+    setValuesSafe(C.DD_Harvest_White, list)
+    setValuesSafe(C.DD_Harvest_Black, list)
+    setValuesSafe(C.DD_Shovel_WhiteMut, list)
+    setValuesSafe(C.DD_Shovel_BlackMut, list)
+    setValuesSafe(C.DD_ESP_Mutation, list)
+    setValuesSafe(C.DD_Event_White, list)
+    setValuesSafe(C.DD_Event_Black, list)
+  end
+end
 
 -- Home
 HomeAPI.SetChangelog = function(text) State.Home.ChangelogText = tostring(text or "-") if CH_Paragraph and CH_Paragraph.SetContent then CH_Paragraph:SetContent(State.Home.ChangelogText)
