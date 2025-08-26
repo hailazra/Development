@@ -1106,6 +1106,106 @@ EventAPI.SetBlackMutationList  = function(list) if DD_Event_Black and DD_Event_B
 ESPAPI.SetFruitList    = function(list) if DD_ESP_Fruit and DD_ESP_Fruit.SetValues then DD_ESP_Fruit:SetValues(list) end end
 ESPAPI.SetMutationList = function(list) if DD_ESP_Mutation and DD_ESP_Mutation.SetValues then DD_ESP_Mutation:SetValues(list) end end
 
+--======================================================
+-- Task Manager (start/stop loop per fitur)
+--======================================================
+getgenv().RemnantTasks = getgenv().RemnantTasks or {}
+local Tasks = getgenv().RemnantTasks
+
+function Tasks.Start(name, runnerFn) -- runnerFn harus return stopperFn (optional)
+    Tasks.Stop(name)
+    local alive = true
+    local stopper
+    local th = task.spawn(function()
+        stopper = runnerFn(function() return alive end) -- pass isAlive checker
+    end)
+    Tasks[name] = {
+        alive   = function() return alive end,
+        stop    = function()
+            alive = false
+            if stopper then pcall(stopper) end
+        end
+    }
+end
+
+function Tasks.Stop(name)
+    local t = Tasks[name]
+    if t and t.stop then pcall(t.stop) end
+    Tasks[name] = nil
+end
+
+function Tasks.StopAll()
+    for k in pairs(Tasks) do Tasks.Stop(k) end
+end
+
+--======================================================
+-- Loader modul via loadstring (mendukung 2 gaya return)
+--   Gaya A: return function(ctx) -> {Start=fn, Stop=fn} / table {Start,Stop}
+--   Gaya B: return nil, pakai getgenv() CFG & Run flag (fallback)
+--======================================================
+getgenv().RemnantLoader = getgenv().RemnantLoader or { Mounted = {} }
+local Loader = getgenv().RemnantLoader
+
+local function _ctx()
+    return {
+        Globals = getgenv().RemnantGlobals,
+        UI      = getgenv().RemnantUI,
+        State   = getgenv().RemnantState,
+        Tasks   = Tasks,
+    }
+end
+
+function Loader.Load(name, url)
+    local m = Loader.Mounted[name]
+    if m then return m end
+    local ok, ret = pcall(function()
+        return loadstring(game:HttpGet(url))()
+    end)
+    local handle = { Start=nil, Stop=nil, _raw=ret }
+
+    if ok and type(ret) == "function" then
+        local t = ret(_ctx())  -- normalize
+        handle.Start = t.Start or t.Run or t.start
+        handle.Stop  = t.Stop  or t.Kill or t.stop
+    elseif ok and type(ret) == "table" then
+        handle.Start = ret.Start or ret.Run or ret.start
+        handle.Stop  = ret.Stop  or ret.Kill or ret.stop
+    else
+        -- Fallback: modul gaya B, kendali via getgenv().<Cfg>.Run
+        handle.Start = function() end
+        handle.Stop  = function() end
+    end
+
+    Loader.Mounted[name] = handle
+    return handle
+end
+
+function Loader.Start(name, url, ...)
+    local h = Loader.Load(name, url)
+    if h and h.Start then pcall(h.Start, _ctx(), ...) end
+end
+
+function Loader.Stop(name)
+    local h = Loader.Mounted[name]
+    if h and h.Stop then pcall(h.Stop) end
+    Tasks.Stop(name)
+end
+
+function Loader.Unload(name)
+    Loader.Stop(name)
+    Loader.Mounted[name] = nil
+end
+
+function Loader.StopAll()
+    for n in pairs(Loader.Mounted) do Loader.Stop(n) end
+    Tasks.StopAll()
+end
+
+function Loader.UnloadAll()
+    Loader.StopAll()
+    Loader.Mounted = {}
+end
+
 Window:OnClose(function()
   local s = State
   -- Set semua flag auto ke false
@@ -1150,6 +1250,15 @@ Window:OnClose(function()
   s.ESP.ESPEgg = false
   s.ESP.ESPCrate = false
   s.ESP.ESPPet = false
+
+-- hentikan semua runner & unload modul
+if getgenv().RemnantLoader then
+    getgenv().RemnantLoader.UnloadAll()
+end
+if getgenv().RemnantTasks then
+    getgenv().RemnantTasks.StopAll()
+end
+
 
   -- kalau kamu simpan handle Toggle di RemnantUI.Controls, bisa juga panggil :Set(false)
   -- misal: if C.TG_AutoPlant and C.TG_AutoPlant.Set then C.TG_AutoPlant:Set(false) end
