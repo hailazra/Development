@@ -246,6 +246,15 @@ State.ESP = State.ESP or {
 }
 
 --======================================================
+-- Feature URLs (raw)
+--======================================================
+getgenv().RemnantFeatures = getgenv().RemnantFeatures or {
+    PlaceEgg = "https://raw.githubusercontent.com/hailazra/Development/refs/heads/main/AutoPlaceSelected_v8.lua",
+    -- Tambah fitur lain di sini...
+}
+
+
+--======================================================
 -- Helpers
 --======================================================
 local function setValues(control, values)
