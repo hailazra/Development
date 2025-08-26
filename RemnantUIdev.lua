@@ -34,6 +34,9 @@ getgenv().RemnantUI = getgenv().RemnantUI or {}
 getgenv().RemnantUI.Controls = getgenv().RemnantUI.Controls or {}
 local Controls = getgenv().RemnantUI.Controls
 
+-- Event global agar modul eksternal bisa stop saat GUI ditutup
+getgenv().RemnantUI.StopAllEvent = getgenv().RemnantUI.StopAllEvent or Instance.new("BindableEvent")
+
 
 -- 1) Load WindUI (docs: Load latest)
 local WindUI = loadstring(game:HttpGet(
