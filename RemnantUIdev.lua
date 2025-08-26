@@ -262,7 +262,7 @@ do
     end
   end
 
-  getgenv().RemnantUI.API.Farm.SetFruitList = function(list)
+    getgenv().RemnantUI.API.Farm.SetFruitList = function(list)
     setValuesSafe(C.DD_Harvest_Fruit, list)
     setValuesSafe(C.DD_Shovel_Fruit,  list)
     setValuesSafe(C.DD_Event_Fruit,   list)
