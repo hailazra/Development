@@ -29,10 +29,17 @@ getgenv().RemnantGlobals = {
     Camera     = Camera,
 }
 
+-- Update Character & Humanoid when the player respawns
+LP.CharacterAdded:Connect(function(char)
+    Character = char
+    Humanoid = char:WaitForChild("Humanoid")
+    getgenv().RemnantGlobals.Character = Character
+    getgenv().RemnantGlobals.Humanoid = Humanoid
+end)
+
 --=== RemnantUI Controls registry (wajib agar elemen bisa diakses modul) ===
 getgenv().RemnantUI = getgenv().RemnantUI or {}
 getgenv().RemnantUI.Controls = getgenv().RemnantUI.Controls or {}
-local Controls = getgenv().RemnantUI.Controls
 
 -- Event global agar modul eksternal bisa stop saat GUI ditutup
 getgenv().RemnantUI.StopAllEvent = getgenv().RemnantUI.StopAllEvent or Instance.new("BindableEvent")
@@ -256,7 +263,7 @@ getgenv().RemnantFeatures.AutoCollectFruit = "https://raw.githubusercontent.com/
 do
   local UI  = getgenv().RemnantUI
   local C   = UI.Controls
-  local function setValuesSafe(ctrl, values)
+  local function setValues(ctrl, values)
     if ctrl and ctrl.SetValues and type(values) == "table" then
       ctrl:SetValues(values)
     end
@@ -312,14 +319,6 @@ local function stopAutoCollectFruit()
   if G.FruitCollector and G.FruitCollector.Kill then
     G.FruitCollector.Kill()
   end
-end
-
-
---======================================================
--- Helpers
---======================================================
-local function setValues(control, values)
-    if control and control.SetValues then control:SetValues(values) end
 end
 
 --======================================================
@@ -1134,22 +1133,6 @@ local EventAPI = getgenv().RemnantUI.API.Event
 local ESPAPI = getgenv().RemnantUI.API.ESP
 local HomeAPI    = getgenv().RemnantUI.API.Home
 local WebhookAPI = getgenv().RemnantUI.API.Webhook
-
- getgenv().RemnantUI.API.Farm.SetFruitList = function(list)
-    setValuesSafe(C.DD_Harvest_Fruit, list)
-    setValuesSafe(C.DD_Shovel_Fruit,  list)
-    setValuesSafe(C.DD_Event_Fruit,   list)
-  end
-
-  getgenv().RemnantUI.API.Farm.SetMutationLists = function(list)
-    setValuesSafe(C.DD_Harvest_White, list)
-    setValuesSafe(C.DD_Harvest_Black, list)
-    setValuesSafe(C.DD_Shovel_WhiteMut, list)
-    setValuesSafe(C.DD_Shovel_BlackMut, list)
-    setValuesSafe(C.DD_ESP_Mutation, list)
-    setValuesSafe(C.DD_Event_White, list)
-    setValuesSafe(C.DD_Event_Black, list)
-  end
 end
 
 -- Home
@@ -1162,7 +1145,20 @@ end
 
 -- Farm: Plants
 FarmAPI.SetSeedList           = function(list) setValues(DD_Plant_Seed, list) end
-FarmAPI.SetFruitList          = function(list) setValues(DD_Harvest_Fruit, list) end
+FarmAPI.SetFruitList = function(list)
+    setValues(DD_Harvest_Fruit, list)
+    setValues(DD_Shovel_Fruit,  list)
+    setValues(DD_Event_Fruit,   list)
+end
+FarmAPI.SetMutationLists = function(list)
+    setValues(DD_Harvest_White,   list)
+    setValues(DD_Harvest_Black,   list)
+    setValues(DD_Shovel_WhiteMut, list)
+    setValues(DD_Shovel_BlackMut, list)
+    setValues(DD_ESP_Mutation,    list)
+    setValues(DD_Event_White,     list)
+    setValues(DD_Event_Black,     list)
+end
 FarmAPI.SetWhiteMutationList  = function(list) setValues(DD_Harvest_White, list) end
 FarmAPI.SetBlackMutationList  = function(list) setValues(DD_Harvest_Black, list) end
 FarmAPI.SetPlantList          = function(list) setValues(DD_Move_Select, list) end
