@@ -1,172 +1,179 @@
 --========================================================
--- Auto Collect Fruit (No GUI) — v1 MENTAHAN
--- Dependensi:
---   getgenv().RemnantGlobals  (sudah kamu siapkan di RemnantUIv2_Updated)
---   Optional: getgenv().RemnantUI (untuk Stop-on-GUI-close via BindableEvent)
---
--- Cara pakai singkat:
---   getgenv().FruitCollectCFG = {
---     Run               = true,
---     ScanInterval      = 0.10,    -- detik
---     RateLimitPerFruit = 1.25,    -- detik cooldown per instance buah
---     MaxConcurrent     = 3,       -- batasi jumlah collect simultan
---     UseOwnerFilter    = true,    -- hanya milik LocalPlayer
---     SelectedFruits    = {"Apple","Orange"},  -- nama dari SeedData
---     WeightMin         = 0.0,     -- kg
---     WeightMax         = math.huge,
---     MutationWhitelist = {},      -- contoh: {"Windstruck","Giant"}
---     MutationBlacklist = {},      -- contoh: {"Rotten"}
---     Debug             = true,
---   }
---   loadstring(game:HttpGet("RAW_URL/AutoCollectFruit_v1.lua"))()
---
--- Matikan & bersihkan:
---   if getgenv().FruitCollector and getgenv().FruitCollector.Kill then getgenv().FruitCollector.Kill() end
+-- Auto Collect Fruit (No GUI) — v1b (patch path + lists)
 --========================================================
 
--- ==========
--- Safeties
--- ==========
-local G = getgenv()
-local RG = (G.RemnantGlobals or {}) -- diisi dari GUI kamu
+local G  = getgenv()
+local RG = (G.RemnantGlobals or {})
 local Players    = RG.Players    or game:GetService("Players")
 local RS         = RG.RS         or game:GetService("ReplicatedStorage")
 local RunService = RG.RunService or game:GetService("RunService")
 local Workspace  = RG.Workspace  or game:GetService("Workspace")
+local LP         = RG.LP or Players.LocalPlayer
 
-local LP = RG.LP or Players.LocalPlayer
+-- Single-instance guard
+if G.FruitCollector and G.FruitCollector.Kill then G.FruitCollector.Kill() end
 
--- Single instance guard
-if G.FruitCollector and G.FruitCollector.Kill then
-    G.FruitCollector.Kill()
-end
-
--- ==========
--- Config
--- ==========
+--================
+-- Config (same)
+--================
 local CFG = rawget(G, "FruitCollectCFG") or {}
 CFG.Run               = (CFG.Run               ~= nil) and CFG.Run               or false
 CFG.ScanInterval      = tonumber(CFG.ScanInterval)      or 0.10
 CFG.RateLimitPerFruit = tonumber(CFG.RateLimitPerFruit) or 1.25
 CFG.MaxConcurrent     = tonumber(CFG.MaxConcurrent)     or 3
 CFG.UseOwnerFilter    = (CFG.UseOwnerFilter ~= nil) and CFG.UseOwnerFilter or true
-CFG.SelectedFruits    = CFG.SelectedFruits or {}              -- array of string (nama buah)
+CFG.SelectedFruits    = CFG.SelectedFruits or {}
 CFG.WeightMin         = tonumber(CFG.WeightMin) or 0.0
 CFG.WeightMax         = (CFG.WeightMax ~= nil) and tonumber(CFG.WeightMax) or math.huge
-CFG.MutationWhitelist = CFG.MutationWhitelist or {}           -- array of string (nama attribute = true)
+CFG.MutationWhitelist = CFG.MutationWhitelist or {}
 CFG.MutationBlacklist = CFG.MutationBlacklist or {}
 CFG.Debug             = (CFG.Debug ~= nil) and CFG.Debug or true
+CFG.PromptHoldSeconds = CFG.PromptHoldSeconds -- optional
 
--- helper debug
-local function dprint(...)
-    if CFG.Debug then
-        print("[FruitAuto]", ...)
-    end
+local function dprint(...) if CFG.Debug then print("[FruitAuto]", ...) end end
+
+--========================
+-- Lists for GUI dropdown
+--========================
+local Lists = { FruitNames = {}, Mutations = {} }
+
+-- Small utils
+local function uniq_sorted(arr)
+    local u,t={},{}
+    for _,v in ipairs(arr) do if v and v~="" then u[v]=true end end
+    for k in pairs(u) do t[#t+1]=k end
+    table.sort(t); return t
 end
 
--- =================================
--- Discovery helpers (dropdown data)
--- =================================
-local Lists = {
-    FruitNames   = {}, -- diambil dari RS.Data.SeedData
-    Mutations    = {}, -- diambil dari RS.Modules.MutationHandler
-}
-
+-- Try to build Fruit list from RS.Data.SeedData (Folder or ModuleScript)
 local function buildFruitList()
-    -- Struktur diasumsikan: ReplicatedStorage.Data.SeedData
-    local ok, seedData = pcall(function()
-        local Data = RS:FindFirstChild("Data")
-        return Data and Data:FindFirstChild("SeedData")
-    end)
-    if ok and seedData then
-        local set = {}
-        for _, itm in ipairs(seedData:GetChildren()) do
-            set[itm.Name] = true
+    local Data = RS:FindFirstChild("Data")
+    local seed = Data and Data:FindFirstChild("SeedData")
+    local out  = {}
+
+    if seed then
+        if seed:IsA("Folder") then
+            for _,ch in ipairs(seed:GetChildren()) do out[#out+1]=ch.Name end
+        elseif seed:IsA("ModuleScript") then
+            local ok, tbl = pcall(require, seed)
+            if ok and type(tbl)=="table" then
+                -- ambil keys utama (nama buah)
+                for k,_ in pairs(tbl) do out[#out+1]=tostring(k) end
+            end
         end
-        local arr = {}
-        for name in pairs(set) do arr[#arr+1] = name end
-        table.sort(arr)
-        Lists.FruitNames = arr
-        dprint("SeedData -> Fruit list found:", #arr, "items")
-    else
-        dprint("WARN: RS.Data.SeedData tidak ditemukan.")
     end
+
+    if #out==0 then
+        dprint("WARN: SeedData tidak terbaca (Folder/ModuleScript). Dropdown buah bisa kosong sementara.")
+    else
+        dprint("SeedData ->", #out, "items")
+    end
+    Lists.FruitNames = uniq_sorted(out)
 end
 
+-- Try to build mutation list from RS.Modules.MutationHandler (Folder/ModuleScript)
 local function buildMutationList()
-    -- Struktur diasumsikan: ReplicatedStorage.Modules.MutationHandler
-    local ok, mut = pcall(function()
-        local Mods = RS:FindFirstChild("Modules")
-        return Mods and Mods:FindFirstChild("MutationHandler")
-    end)
-    if ok and mut then
-        -- Banyak game menaruh table di ModuleScript ini.
-        -- Kita tidak require module (sering obfuscated), tapi minimal kumpulkan child/attributes jika ada.
-        local names = {}
-        -- Coba dari attributes (kalau ada)
-        for _, attrib in ipairs(mut:GetAttributes()) do
-            names[#names+1] = attrib
+    local Mods = RS:FindFirstChild("Modules")
+    local mh   = Mods and Mods:FindFirstChild("MutationHandler")
+    local out  = {}
+
+    if mh then
+        if mh:IsA("Folder") then
+            for _,ch in ipairs(mh:GetChildren()) do out[#out+1] = ch.Name end
+        elseif mh:IsA("ModuleScript") then
+            local ok, tbl = pcall(require, mh)
+            if ok and type(tbl)=="table" then
+                for k,_ in pairs(tbl) do out[#out+1]=tostring(k) end
+            end
         end
-        -- Coba dari anak-anak
-        for _, ch in ipairs(mut:GetChildren()) do
-            names[#names+1] = ch.Name
-        end
-        -- Unique + sort
-        local uniq = {}
-        for _, n in ipairs(names) do uniq[n] = true end
-        local arr = {}
-        for n in pairs(uniq) do arr[#arr+1] = n end
-        table.sort(arr)
-        Lists.Mutations = arr
-        dprint("MutationHandler -> Mutation list approx:", #arr, "items")
-    else
-        dprint("WARN: RS.Modules.MutationHandler tidak ditemukan.")
+        -- attributes on the module (rare, but try)
+        for _,an in ipairs(mh:GetAttributes()) do out[#out+1]=an end
     end
+
+    if #out==0 then
+        dprint("INFO: MutationHandler belum kebaca; akan di-augment saat scanning dari Attributes buah.")
+    else
+        dprint("MutationHandler ->", #out, "items")
+    end
+    Lists.Mutations = uniq_sorted(out)
 end
 
 buildFruitList()
 buildMutationList()
 
--- =========================
--- Selectors & path helpers
--- =========================
-local PlantsRootPath = {"Farm","Farm","Important","PlantsPhysical"}
-local function getPlantsRoot()
-    -- Workspace.Farm.Farm.Important.PlantsPhysical
-    local node = Workspace
-    for _, name in ipairs(PlantsRootPath) do
-        node = node:FindFirstChild(name)
-        if not node then return nil end
+--==================================
+-- Pathing: find PlantsPhysical root
+--==================================
+-- PRIORITAS:
+-- 1) RG.Paths.PlantsPhysicalRoot (instance langsung dari GUI kamu)
+-- 2) Hard path umum: Workspace.Farm.Farm.Important.PlantsPhysical
+-- 3) Hard path varian: Workspace.Farm.Important.PlantsPhysical
+-- 4) Hard path lain (mirip place egg kadang pakai "Objects_Physical"): Workspace.Farm.Farm.Important.PlantsPhysical
+-- 5) Deep search by name "PlantsPhysical" yang punya child "Fruits" di bawah Model pohon
+local function path_chain(root, names)
+    local n = root
+    for _,nm in ipairs(names) do
+        n = n and n:FindFirstChild(nm) or nil
     end
-    return node
+    return n
 end
 
-local function isNumberedFolder(inst)
-    -- Sesuai info: buah memiliki child bernama "1" yang berisi ProximityPrompt
-    -- Kita tidak bergantung penuh, tapi ini membantu.
-    if not inst then return false end
-    return tonumber(inst.Name) ~= nil
-end
-
-local function findEnabledPrompt(fruitModel)
-    -- Cari ProximityPrompt pada descendant, prefer yang Enabled = true
-    if not fruitModel then return nil end
-    local best = nil
-    for _, desc in ipairs(fruitModel:GetDescendants()) do
-        if desc:IsA("ProximityPrompt") then
-            if desc.Enabled then
-                best = desc
-                break
-            else
-                best = best or desc
+local function deep_find_plantsphysical()
+    -- Cari Folder bernama "PlantsPhysical" yang di bawahnya ada children yang punya Folder "Fruits"
+    local cand = {}
+    for _,desc in ipairs(Workspace:GetDescendants()) do
+        if desc.Name=="PlantsPhysical" and desc:IsA("Folder") then
+            table.insert(cand, desc)
+        end
+    end
+    for _,pf in ipairs(cand) do
+        for _,tree in ipairs(pf:GetChildren()) do
+            if tree:FindFirstChild("Fruits") then
+                return pf
             end
+        end
+    end
+    return nil
+end
+
+local function getPlantsRoot()
+    -- 1) from RemnantGlobals
+    if RG.Paths and RG.Paths.PlantsPhysicalRoot and typeof(RG.Paths.PlantsPhysicalRoot)=="Instance" then
+        return RG.Paths.PlantsPhysicalRoot
+    end
+
+    -- 2) Common strict path
+    local p1 = path_chain(Workspace, {"Farm","Farm","Important","PlantsPhysical"})
+    if p1 then return p1 end
+
+    -- 3) Variant
+    local p2 = path_chain(Workspace, {"Farm","Important","PlantsPhysical"})
+    if p2 then return p2 end
+
+    -- 4) (jaga2 typo “Worpkspace” di input user) — autonorm sudah pakai Workspace
+
+    -- 5) Deep search
+    local p3 = deep_find_plantsphysical()
+    if p3 then return p3 end
+
+    -- no root
+    return nil
+end
+
+--=====================
+-- Fruit info helpers
+--=====================
+local function findEnabledPrompt(fruitModel)
+    local best
+    for _,desc in ipairs(fruitModel:GetDescendants()) do
+        if desc:IsA("ProximityPrompt") then
+            if desc.Enabled then return desc else best = best or desc end
         end
     end
     return best
 end
 
 local function getFruitWeight(fruitModel)
-    -- Path: ...Fruits.[Buah].Weight (NumberValue / ValueBase)
     local w = fruitModel:FindFirstChild("Weight")
     if w and w.Value then
         local num = tonumber(w.Value)
@@ -175,109 +182,89 @@ local function getFruitWeight(fruitModel)
     return nil
 end
 
-local function hasMutationAllowed(fruitModel)
-    -- Mutasi ada di Attributes model buah: e.g. Windstruck = true
-    -- Filter:
-    --  - Whitelist (jika tidak kosong) -> harus match salah satu
-    --  - Blacklist -> tidak boleh ada yg match
-    local hasAnyWhitelist = (#CFG.MutationWhitelist > 0)
+-- Keep growing mutation list dynamically from fruit attributes encountered
+local function augmentMutationListFromFruit(fruitModel)
+    local found = {}
+    for _,attrName in ipairs(fruitModel:GetAttributes()) do
+        local val = fruitModel:GetAttribute(attrName)
+        if val == true then found[#found+1] = attrName end
+    end
+    if #found>0 then
+        local all = {}
+        for _,v in ipairs(Lists.Mutations) do all[#all+1]=v end
+        for _,v in ipairs(found) do all[#all+1]=v end
+        Lists.Mutations = uniq_sorted(all)
+    end
+end
 
-    local function hasAttrTrue(name)
+local function hasMutationAllowed(fruitModel)
+    local wl, bl = CFG.MutationWhitelist, CFG.MutationBlacklist
+    local hasWL  = (#wl>0)
+
+    local function hasTrue(name)
         local ok, val = pcall(function() return fruitModel:GetAttribute(name) end)
         return ok and (val == true)
     end
 
-    if hasAnyWhitelist then
-        local okWL = false
-        for _, m in ipairs(CFG.MutationWhitelist) do
-            if hasAttrTrue(m) then okWL = true; break end
-        end
-        if not okWL then
-            return false, "no_whitelist_mutation"
-        end
+    if hasWL then
+        local pass = false
+        for _,m in ipairs(wl) do if hasTrue(m) then pass=true break end end
+        if not pass then return false, "no_whitelist_mutation" end
     end
-
-    for _, m in ipairs(CFG.MutationBlacklist) do
-        if hasAttrTrue(m) then
-            return false, "blacklisted_mutation:"..m
-        end
-    end
+    for _,m in ipairs(bl) do if hasTrue(m) then return false, "blacklisted:"..m end end
 
     return true
 end
 
 local function isFruitNameSelected(fruitModel)
-    -- Nama buah diambil dari model name pada folder Fruits, atau meta lain jika ada.
-    -- Kita gunakan fruitModel.Name dan cocokin dengan SelectedFruits (exact match).
-    if #CFG.SelectedFruits == 0 then return true end -- kalau kosong, artinya ambil semua
+    if #CFG.SelectedFruits==0 then return true end
     local name = fruitModel.Name
-    for _, sel in ipairs(CFG.SelectedFruits) do
-        if sel == name then
-            return true
-        end
-    end
+    for _,sel in ipairs(CFG.SelectedFruits) do if sel==name then return true end end
     return false
 end
 
--- ==============
--- Owner filters
--- ==============
 local function isOwnedByLocal(fruitModel)
     if not CFG.UseOwnerFilter then return true end
 
-    -- Heuristik 1: Attribute OwnerName / OwnerUserId pada Tree/Fruit
-    local container = fruitModel
-    -- naik sampai pohon
-    local tree = fruitModel:FindFirstAncestorWhichIsA("Model")
-    if tree and tree.Parent and tree.Parent.Name == "Fruits" then
-        tree = tree.Parent.Parent  -- [Tree]/Fruits/[Buah] -> [Tree]
+    local tree = fruitModel
+    if tree and tree.Parent and tree.Parent.Name=="Fruits" then
+        tree = tree.Parent.Parent
     end
 
     local candidates = {fruitModel, tree}
-    for _, inst in ipairs(candidates) do
+    for _,inst in ipairs(candidates) do
         if inst then
             local ownerName = inst:GetAttribute("OwnerName")
-            if ownerName and tostring(ownerName) == LP.Name then return true end
-
+            if ownerName and tostring(ownerName)==LP.Name then return true end
             local ownerId = inst:GetAttribute("OwnerUserId")
-            if ownerId and tonumber(ownerId) == LP.UserId then return true end
+            if ownerId and tonumber(ownerId)==LP.UserId then return true end
         end
     end
 
-    -- Heuristik 2: Farm kamu 1 map tersendiri ⇒ izinkan
-    -- (Kamu bilang seluruh area farm = milik LocalPlayer, maka return true)
+    -- kamu bilang seluruh area farm = punya local → OK
     return true
 end
 
--- ==================
--- Collecting action
--- ==================
-local hasFirePrompt = (type(getgenv().fireproximityprompt) == "function") and getgenv().fireproximityprompt
-                     or (typeof(fireproximityprompt) == "function" and fireproximityprompt)
-local Active = {
-    LastTryAt = {}, -- [fruitModel] = os.clock() timestamp
-    InFlight  = 0,
-    Stopped   = false,
-    ConnStop  = nil,
-}
+--========================
+-- Action: collect prompt
+--========================
+local hasFirePrompt = (type(G.fireproximityprompt)=="function" and G.fireproximityprompt)
+                   or (typeof(fireproximityprompt)=="function" and fireproximityprompt)
+
+local Active = { LastTryAt = {}, InFlight=0, Stopped=false, ConnStop=nil }
 
 local function inventoryIsFull()
-    -- Optional hook kalau kamu punya API sendiri:
-    -- return getgenv().RemnantGlobals.InventoryAPI.IsFruitFull()
     local invAPI = RG.InventoryAPI
-    if invAPI and typeof(invAPI) == "table" and typeof(invAPI.IsFruitFull) == "function" then
+    if invAPI and typeof(invAPI)=="table" and typeof(invAPI.IsFruitFull)=="function" then
         local ok, full = pcall(invAPI.IsFruitFull)
-        if ok and full == true then return true end
+        if ok and full==true then return true end
     end
     return false
 end
 
-local function canTryFruit(fruit)
-    local last = Active.LastTryAt[fruit]
-    if last and (os.clock() - last) < CFG.RateLimitPerFruit then
-        return false
-    end
-    return true
+local function canTryFruit(f)
+    local last = Active.LastTryAt[f]
+    return not (last and (os.clock()-last) < CFG.RateLimitPerFruit)
 end
 
 local function tryCollectFruit(fruitModel, prompt)
@@ -285,177 +272,131 @@ local function tryCollectFruit(fruitModel, prompt)
     if Active.InFlight >= CFG.MaxConcurrent then return end
     Active.LastTryAt[fruitModel] = os.clock()
 
-    -- Weight check
+    -- Weight
     local weight = getFruitWeight(fruitModel)
-    if weight == nil then
-        dprint("Skip (no weight)", fruitModel:GetFullName())
-        return
-    end
+    if not weight then dprint("Skip(no weight)", fruitModel:GetFullName()); return end
     if weight < CFG.WeightMin or weight > CFG.WeightMax then
-        dprint(("Skip (weight %.3f out of range %.3f..%.3f)"):format(weight, CFG.WeightMin, CFG.WeightMax))
-        return
+        dprint(("Skip(weight %.3f out of %.3f..%.3f)"):format(weight, CFG.WeightMin, CFG.WeightMax)); return
     end
 
-    -- Mutation filter
-    local okMut, reasonMut = hasMutationAllowed(fruitModel)
-    if not okMut then
-        dprint("Skip (mutation filter):", reasonMut or "no_reason")
-        return
-    end
+    -- Mutations
+    augmentMutationListFromFruit(fruitModel)
+    local okMut, why = hasMutationAllowed(fruitModel)
+    if not okMut then dprint("Skip(mut)", why or ""); return end
 
-    -- Selected name
-    if not isFruitNameSelected(fruitModel) then
-        dprint("Skip (not in SelectedFruits):", fruitModel.Name)
-        return
-    end
+    -- Name
+    if not isFruitNameSelected(fruitModel) then dprint("Skip(name)", fruitModel.Name); return end
 
-    -- Owner filter
-    if not isOwnedByLocal(fruitModel) then
-        dprint("Skip (not owned by local):", fruitModel:GetFullName())
-        return
-    end
+    -- Owner
+    if not isOwnedByLocal(fruitModel) then dprint("Skip(owner)"); return end
 
-    -- Prompt must be Enabled
-    if not (prompt and prompt.Enabled) then
-        dprint("Skip (prompt not enabled):", fruitModel.Name)
-        return
-    end
+    if not (prompt and prompt.Enabled) then dprint("Skip(prompt off)"); return end
 
-    -- Inventory full?
     if inventoryIsFull() then
-        dprint("Inventory FULL detected. Stopping Auto Collect.")
+        dprint("Inventory FULL → stop.")
         Active.Stopped = true
         return
     end
 
-    -- Collect using fireproximityprompt (no teleport)
     if not hasFirePrompt then
-        dprint("WARN: 'fireproximityprompt' tidak tersedia. Tidak bisa collect dari jauh.")
+        dprint("WARN: fireproximityprompt unavailable (no teleport mode).")
         return
     end
 
     Active.InFlight += 1
     task.defer(function()
-        local ok, err = pcall(function()
-            local holdSeconds = (prompt.HoldDuration ~= nil and prompt.HoldDuration > 0)
-                                and prompt.HoldDuration or 0.1
-            -- override hold pakai CFG jika mau
-            if CFG.PromptHoldSeconds and CFG.PromptHoldSeconds > 0 then
-                holdSeconds = CFG.PromptHoldSeconds
-            end
-
-            dprint(("Collect %s (weight=%.3f, hold=%.2fs)"):format(fruitModel.Name, weight, holdSeconds))
-            hasFirePrompt(prompt, holdSeconds)
+        local ok,err = pcall(function()
+            local hold = (CFG.PromptHoldSeconds and CFG.PromptHoldSeconds>0) and CFG.PromptHoldSeconds
+                      or (prompt.HoldDuration and prompt.HoldDuration>0 and prompt.HoldDuration) or 0.1
+            dprint(("Collect %s (w=%.3f, hold=%.2fs)"):format(fruitModel.Name, weight, hold))
+            hasFirePrompt(prompt, hold)
         end)
-        if not ok then
-            dprint("ERROR collect:", tostring(err))
-        end
+        if not ok then dprint("ERROR collect:", tostring(err)) end
         Active.InFlight -= 1
     end)
 end
 
--- ==================
--- Scanning pipeline
--- ==================
+--================
+-- Scanning loop
+--================
 local function scanOnce()
     if Active.Stopped or not CFG.Run then return end
 
     local root = getPlantsRoot()
     if not root then
-        dprint("PlantsPhysical root not found.")
+        dprint("PlantsPhysical root not found. Coba set RG.Paths.PlantsPhysicalRoot atau cek path sesuai place-egg.")
+        -- hint debug: list kandidat "PlantsPhysical" ditemukan di workspace
+        local hits={}
+        for _,d in ipairs(Workspace:GetDescendants()) do
+            if d.Name=="PlantsPhysical" then hits[#hits+1]=d:GetFullName() end
+            if #hits>=5 then break end
+        end
+        if #hits>0 then dprint("Candidates:", table.concat(hits," | ")) end
         return
     end
 
-    local batch = 0
-    -- Struktur: PlantsPhysical.[Tree].Fruits.[Buah]
-    for _, tree in ipairs(root:GetChildren()) do
+    local batch=0
+    for _,tree in ipairs(root:GetChildren()) do
         local fruitsFolder = tree:FindFirstChild("Fruits")
         if fruitsFolder then
-            for _, fruit in ipairs(fruitsFolder:GetChildren()) do
+            for _,fruit in ipairs(fruitsFolder:GetChildren()) do
                 if Active.Stopped then return end
                 if not fruit:IsA("Model") then continue end
-                -- Cari prompt "enabled"
                 local prompt = findEnabledPrompt(fruit)
                 if prompt and prompt.Enabled and canTryFruit(fruit) then
                     tryCollectFruit(fruit, prompt)
                     batch += 1
-                    if batch >= (CFG.MaxConcurrent * 2) then
-                        -- throttle ringan biar nggak nge-spam
-                        task.wait(0.02)
-                        batch = 0
-                    end
+                    if batch >= (CFG.MaxConcurrent*2) then task.wait(0.02); batch=0 end
                 end
             end
         end
     end
 end
 
-local Loop = nil
+local Loop
 local function start()
     if Loop then return end
-    Active.Stopped = false
-    dprint("Auto Collect Fruit START. Interval:", CFG.ScanInterval)
+    Active.Stopped=false
+    dprint("Auto Collect Fruit START @", CFG.ScanInterval, "s")
 
     Loop = task.spawn(function()
         while not Active.Stopped do
-            local t0 = os.clock()
-            local ok, err = pcall(scanOnce)
-            if not ok then
-                dprint("ERROR scanOnce:", tostring(err))
-            end
-            local elapsed = os.clock() - t0
-            local sleep = math.max(0.01, (CFG.ScanInterval or 0.1) - elapsed)
-            task.wait(sleep)
+            local t0=os.clock()
+            local ok,err=pcall(scanOnce)
+            if not ok then dprint("ERROR scanOnce:", tostring(err)) end
+            local sl = math.max(0.01, (CFG.ScanInterval or 0.1) - (os.clock()-t0))
+            task.wait(sl)
         end
-        dprint("Auto Collect Fruit loop stopped.")
+        dprint("Loop stopped.")
     end)
 end
 
 local function stop()
-    Active.Stopped = true
+    Active.Stopped=true
 end
 
 local function kill()
     stop()
-    if Active.ConnStop then
-        Active.ConnStop:Disconnect()
-        Active.ConnStop = nil
-    end
-    Loop = nil
-    G.FruitCollector = nil
-    dprint("Auto Collect Fruit KILLED.")
+    if Active.ConnStop then Active.ConnStop:Disconnect(); Active.ConnStop=nil end
+    Loop=nil
+    G.FruitCollector=nil
+    dprint("KILLED.")
 end
 
--- Hook Stop-on-GUI-close (optional)
+-- Hook Stop-on-GUI-close
 do
-    -- Kalau RemnantUIdev kamu expose BindableEvent global, contoh:
-    -- getgenv().RemnantUI.StopAllEvent:Fire()
-    local ui = rawget(G, "RemnantUI")
-    local stopEvent =
-        (ui and ui.StopAllEvent) or
-        (RG.StopAllBindable)    or
-        nil
+    local ui = rawget(G,"RemnantUI")
+    local stopEvent = (ui and ui.StopAllEvent) or RG.StopAllBindable
     if stopEvent and stopEvent.Connect then
-        Active.ConnStop = stopEvent:Connect(function()
-            dprint("StopAllEvent received. Stopping Auto Collect.")
-            stop()
-        end)
+        Active.ConnStop = stopEvent:Connect(function() dprint("StopAllEvent"); stop() end)
     end
 end
 
--- Export API
+-- Export
 G.FruitCollector = {
-    Start = start,
-    Stop  = stop,
-    Kill  = kill,
-    Lists = Lists,   -- buat isi dropdown di GUI
+    Start = start, Stop = stop, Kill = kill, Lists = Lists,
+    RefreshLists = function() buildFruitList(); buildMutationList(); dprint("Lists refreshed.") end
 }
 
--- Auto-start kalau Run = true
-if CFG.Run then
-    start()
-else
-    dprint("Auto Collect Fruit loaded. CFG.Run = false (standby).")
-end
-
-
+-- Autostart?
+if CFG.Run then start() else dprint("Loaded. CFG.Run=false") end
