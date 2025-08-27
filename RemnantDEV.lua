@@ -294,10 +294,15 @@ local function startAutoCollectFruit()
 
   local url = (G.RemnantFeatures and G.RemnantFeatures.AutoCollectFruit)
               or "RAW_URL"
-  local ok, err = pcall(function()
-    loadstring(game:HttpGet(url))()
-  end)
-  if not ok then warn("[AutoCollectFruit] load error:", err) return end
+local src = game:HttpGet(url)
+local loader = loadstring or load
+local chunk = loader and loader(src)
+if chunk then
+    chunk()
+else
+    warn("[AutoCollectFruit] executor tidak mendukung loadstring/load")
+    return
+end
 
   -- Setelah modul load, sinkronisasi list dropdown dari modul (jika modul expose)
   local FC = rawget(G, "FruitCollector")
