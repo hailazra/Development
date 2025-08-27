@@ -1,41 +1,60 @@
 --========================================================
--- .devlogic — Auto Fishing (Single File, WindUI fail-safe)
+-- .devlogic / dlogicfish.lua — Auto Fishing (Single File)
+--========================================================
+-- GUI: WindUI (1 tab)  |  Logic: Charge -> StartMinigame -> Complete
+-- Tambahan:
+--  - Auto-equip rod (heuristik nama berisi "rod"/"fish")
+--  - Slider Aim/Power/Delay
+--  - Status counter (casts/completes) + tombol Kill
+--  - Robust terhadap variasi API WindUI (fallback Section/Tab/Toggle/Set)
 --========================================================
 
--- ===== Config =====
+--====================== Konfigurasi ======================
 getgenv().AutoFishCFG = getgenv().AutoFishCFG or {
-    Run = false,
-    CastDelayMin = 1.6,
-    CastDelayMax = 2.8,
-    PowerMin     = 0.88,
-    PowerMax     = 0.98,
-    AimMin       = -0.25,
-    AimMax       =  0.25,
+    Run          = false,
     AutoEquipRod = true,
     DebugPrint   = false,
+
+    -- Range parameter minigame
+    AimMin       = -0.25,   -- -1..1
+    AimMax       =  0.25,   -- -1..1
+    PowerMin     =  0.88,   -- 0..1
+    PowerMax     =  0.98,   -- 0..1
+
+    -- Jeda “manusiawi” antar cast (detik)
+    CastDelayMin = 1.6,
+    CastDelayMax = 2.8,
 }
 local CFG = getgenv().AutoFishCFG
-local function dprint(...) if CFG.DebugPrint then print("[AutoFishing]", ...) end end
 
--- ===== Services & Remotes =====
+--====================== Services & Remotes ==============
 local RS          = game:GetService("ReplicatedStorage")
 local Players     = game:GetService("Players")
 local RunService  = game:GetService("RunService")
 local LP          = Players.LocalPlayer
 
-local function req(path, name)
-    local node = path:WaitForChild(name)
-    if not node then error("Missing: "..name) end
-    return node
+local function req(parent, child)
+    local ok, obj = pcall(function() return parent:WaitForChild(child, 10) end)
+    assert(ok and obj, ("[dlogicfish] Missing node: %s"):format(child))
+    return obj
 end
 
-local NetRoot = req(req(req(req(RS, "Packages"), "_Index"), "sleitnick_net@0.2.0"), "net")
-local RF_Charge  = req(NetRoot, "RF/ChargeFishingRod")
-local RF_StartMG = req(NetRoot, "RF/RequestFishingMinigameStarted")
-local RE_Done    = req(NetRoot, "RE/FishingCompleted")
+-- Path dari data kamu (Sleitnick Net)
+local NetRoot     = req(req(req(req(RS, "Packages"), "_Index"), "sleitnick_net@0.2.0"), "net")
+local RF_Charge   = req(NetRoot, "RF/ChargeFishingRod")
+local RF_StartMG  = req(NetRoot, "RF/RequestFishingMinigameStarted")
+local RE_Done     = req(NetRoot, "RE/FishingCompleted")
 
--- ===== Utils =====
-local function randf(a,b) return a + (b-a)*math.random() end
+--====================== Util ============================
+local casts, completes = 0, 0
+
+local function dprint(...)
+    if CFG.DebugPrint then print("[AutoFishing]", ...) end
+end
+
+local function clamp(x, a, b) if x < a then return a elseif x > b then return b else return x end end
+local function randf(a, b) return a + (b - a) * math.random() end
+
 local function Humanoid()
     local c = LP.Character
     return c and c:FindFirstChildOfClass("Humanoid")
@@ -46,15 +65,27 @@ local function EquipRodIfNeeded()
     local hum = Humanoid()
     local char = LP.Character
     if not hum or not char then return false end
+
+    -- Sudah pegang tool?
     if char:FindFirstChildOfClass("Tool") then return true end
-    local bp = LP:FindFirstChildOfClass("Backpack"); if not bp then return false end
+
+    -- Cari rod di Backpack (heuristik nama)
+    local bp = LP:FindFirstChildOfClass("Backpack")
+    if not bp then return false end
+    local target
     for _, tool in ipairs(bp:GetChildren()) do
         if tool:IsA("Tool") then
             local n = tool.Name:lower()
             if n:find("rod") or n:find("fish") then
-                hum:EquipTool(tool); dprint("Equip rod:", tool.Name); return true
+                target = tool
+                break
             end
         end
+    end
+    if target then
+        hum:EquipTool(target)
+        dprint("Equip rod:", target.Name)
+        return true
     end
     return false
 end
@@ -71,30 +102,70 @@ local function SafeFire(re, ...)
     return ok
 end
 
-local function OneCast()
-    if not EquipRodIfNeeded() then dprint("Rod not found/equipped"); return end
-    SafeInvoke(RF_Charge, os.clock() + math.random())
-    SafeInvoke(RF_StartMG, randf(CFG.AimMin, CFG.AimMax), randf(CFG.PowerMin, CFG.PowerMax))
-    task.wait(randf(0.6, 1.2))
-    SafeFire(RE_Done)
+-- Jika nanti terdeteksi minigame perlu “ticks”, tambahkan di sini
+local function MinigameTickStub()
+    -- contoh: kirim RPC progress tiap ~0.1s kalau game update suatu saat.
+    -- sekarang belum ada remotnya, jadi dibiarkan stub.
 end
 
--- ===== Runner =====
+local function OneCast()
+    if not EquipRodIfNeeded() then
+        dprint("Rod not found/equipped")
+        return
+    end
+
+    -- Charge (pakai timestamp-ish agar mirip perilaku asli)
+    local ts = os.clock() + math.random()
+    SafeInvoke(RF_Charge, ts)
+
+    -- Start minigame: aim & power
+    local aimMin, aimMax       = math.min(CFG.AimMin, CFG.AimMax), math.max(CFG.AimMin, CFG.AimMax)
+    local powerMin, powerMax   = math.min(CFG.PowerMin, CFG.PowerMax), math.max(CFG.PowerMin, CFG.PowerMax)
+    local aim                  = randf(aimMin, aimMax)
+    local power                = randf(powerMin, powerMax)
+    SafeInvoke(RF_StartMG, aim, power)
+
+    -- Optional tick (jaga-jaga)
+    MinigameTickStub()
+
+    -- Tunggu sedikit (durasi minigame)
+    task.wait(randf(0.6, 1.2))
+
+    -- Complete
+    SafeFire(RE_Done)
+
+    -- Stats
+    casts += 1
+    completes += 1
+end
+
+--====================== Runner State =====================
 local AutoFishing = getgenv().LogicDev_AutoFishing or {}
 AutoFishing._running = AutoFishing._running or false
 AutoFishing._looping = AutoFishing._looping or false
-function AutoFishing:SetRun(v) self._running = v and true or false end
-function AutoFishing:Kill() self._running = false self._looping = false end
+
+function AutoFishing:SetRun(v)
+    self._running = v and true or false
+end
+
+function AutoFishing:Kill()
+    self._running = false
+    self._looping = false
+end
+
 function AutoFishing:Start()
     if self._looping then return end
     self._looping = true
+    dprint("Loop start")
     task.spawn(function()
         while self._looping do
             if self._running then
                 local hum = Humanoid()
                 if hum and hum.Health > 0 then
+                    local dMin = math.min(CFG.CastDelayMin, CFG.CastDelayMax)
+                    local dMax = math.max(CFG.CastDelayMin, CFG.CastDelayMax)
                     OneCast()
-                    task.wait(randf(CFG.CastDelayMin, CFG.CastDelayMax))
+                    task.wait(randf(dMin, dMax))
                 else
                     task.wait(1)
                 end
@@ -102,27 +173,31 @@ function AutoFishing:Start()
                 RunService.Heartbeat:Wait()
             end
         end
+        dprint("Loop end")
     end)
 end
+
 getgenv().LogicDev_AutoFishing = AutoFishing
 
--- ===== WindUI (robust loader + API fallback) =====
--- Coba release dist dulu (lebih stabil). Jika gagal, fallback ke releases/latest.
+--====================== WindUI Loader (robust) ==========
 local WindUI
 do
     local ok, lib = pcall(function()
+        -- prefer dist stable
         return loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/main/dist/main.lua"))()
     end)
     if not ok or type(lib) ~= "table" or type(lib.CreateWindow) ~= "function" then
-        warn("[WindUI] dist loader gagal, coba releases/latest")
+        warn("[dlogicfish] WindUI dist gagal, fallback releases/latest")
         ok, lib = pcall(function()
             return loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
         end)
+        assert(ok and type(lib) == "table" and type(lib.CreateWindow) == "function",
+               "[dlogicfish] WindUI CreateWindow tidak tersedia")
     end
-    assert(type(lib)=="table" and type(lib.CreateWindow)=="function", "[WindUI] CreateWindow tidak tersedia")
     WindUI = lib
 end
 
+--====================== GUI (1 Tab) ======================
 local Window = WindUI:CreateWindow({
     Title         = ".devlogic",
     Icon          = "fish",
@@ -135,47 +210,43 @@ local Window = WindUI:CreateWindow({
     HideSearchBar = true,
 })
 
--- Beberapa versi WindUI ada yang: Window:Section():Tab()
--- Versi lain langsung: Window:Tab() tanpa Section.
-local SecMain
-if type(Window.Section) == "function" then
-    SecMain = Window:Section({ Title = "Main", Icon = "gamepad", Opened = true })
-else
-    SecMain = Window -- fallback: pakai Window langsung
-end
+-- beberapa versi WindUI punya Section(); kita fallback bila tidak ada
+local SecMain = (type(Window.Section) == "function")
+    and Window:Section({ Title = "Main", Icon = "gamepad", Opened = true })
+    or Window
 
-local TabFishing
-if type(SecMain.Tab) == "function" then
-    TabFishing = SecMain:Tab({ Title = "Fishing", Icon = "fish" })
-elseif type(Window.Tab) == "function" then
-    TabFishing = Window:Tab({ Title = "Fishing", Icon = "fish" })
-else
-    error("[WindUI] Tidak menemukan method :Tab() pada Window/Section")
-end
-assert(TabFishing, "[WindUI] Gagal membuat Tab")
+-- tab bikin lewat Section atau Window, tergantung yang ada
+local TabFishing = (type(SecMain.Tab) == "function")
+    and SecMain:Tab({ Title = "Fishing", Icon = "fish" })
+    or (type(Window.Tab) == "function" and Window:Tab({ Title = "Fishing", Icon = "fish" }))
 
--- Toggle API juga kadang beda: pastikan field dan setter aman.
+assert(TabFishing, "[dlogicfish] Gagal membuat Tab Fishing — method :Tab() tidak ditemukan")
+
+-- Helper agar aman dengan variasi API Toggle
 local function toggle_create(scope, opts)
-    assert(type(scope.Toggle) == "function", "[WindUI] Method :Toggle() tidak ada")
+    assert(type(scope.Toggle) == "function", "[dlogicfish] Method :Toggle() tidak ada")
     return scope:Toggle(opts)
 end
-
 local function toggle_set(tgl, v)
     if tgl and type(tgl.Set) == "function" then
         tgl:Set(v)
     elseif tgl and type(tgl.SetValue) == "function" then
         tgl:SetValue(v)
-    else
-        -- tidak ada setter? abaikan sinkronisasi
     end
 end
 
-local Tgl_AutoFish = toggle_create(TabFishing, {
-    Title   = "Auto Fishing",
-    Desc    = "Cast → Minigame → Complete",
-    -- WindUI variasi: "Value" / "Default" — kita set keduanya supaya aman
-    Value   = CFG.Run,
-    Default = CFG.Run,
+--=========== UI Controls ===========
+-- Status kecil
+local StatusLabel = TabFishing:Label({
+    Title = ("Status: Casts %d | Completes %d"):format(casts, completes)
+})
+
+-- Toggle utama
+local Tgl_Run = toggle_create(TabFishing, {
+    Title    = "Auto Fishing",
+    Desc     = "Cast \226\134\146 Minigame \226\134\146 Complete",
+    Value    = CFG.Run,     -- pakai Value (umum di WindUI)
+    Default  = CFG.Run,     -- sekaligus set Default (untuk variasi)
     Callback = function(state)
         CFG.Run = state
         AutoFishing:SetRun(state)
@@ -183,11 +254,90 @@ local Tgl_AutoFish = toggle_create(TabFishing, {
     end
 })
 
--- Sinkronisasi UI jika nilai berubah dari luar
+-- Toggle auto-equip
+local Tgl_AutoEquip = toggle_create(TabFishing, {
+    Title    = "Auto-Equip Rod",
+    Desc     = "Cari & equip tool yang namanya mengandung 'rod'/'fish'",
+    Value    = CFG.AutoEquipRod,
+    Default  = CFG.AutoEquipRod,
+    Callback = function(state)
+        CFG.AutoEquipRod = state
+    end
+})
+
+-- Toggle debug
+local Tgl_Debug = toggle_create(TabFishing, {
+    Title    = "Debug Print",
+    Value    = CFG.DebugPrint,
+    Default  = CFG.DebugPrint,
+    Callback = function(state)
+        CFG.DebugPrint = state
+    end
+})
+
+-- Slider helper (jaga perbedaan API)
+local function add_slider(scope, params)
+    assert(type(scope.Slider) == "function", "[dlogicfish] Method :Slider() tidak ada")
+    return scope:Slider(params)
+end
+
+-- Delay sliders
+local S_CDelayMin = add_slider(TabFishing, {
+    Title = "Cast Delay Min (s)",
+    Min = 0.5, Max = 5.0, Value = CFG.CastDelayMin, Rounding = 2,
+    Callback = function(v) CFG.CastDelayMin = clamp(v, 0.0, 10.0) end
+})
+local S_CDelayMax = add_slider(TabFishing, {
+    Title = "Cast Delay Max (s)",
+    Min = 0.6, Max = 6.0, Value = CFG.CastDelayMax, Rounding = 2,
+    Callback = function(v) CFG.CastDelayMax = clamp(v, 0.0, 10.0) end
+})
+
+-- Aim/Power sliders
+local S_AimMin = add_slider(TabFishing, {
+    Title = "Aim Min",
+    Min = -1.0, Max = 1.0, Value = CFG.AimMin, Rounding = 2,
+    Callback = function(v) CFG.AimMin = clamp(v, -1.0, 1.0) end
+})
+local S_AimMax = add_slider(TabFishing, {
+    Title = "Aim Max",
+    Min = -1.0, Max = 1.0, Value = CFG.AimMax, Rounding = 2,
+    Callback = function(v) CFG.AimMax = clamp(v, -1.0, 1.0) end
+})
+local S_PowerMin = add_slider(TabFishing, {
+    Title = "Power Min",
+    Min = 0.0, Max = 1.0, Value = CFG.PowerMin, Rounding = 2,
+    Callback = function(v) CFG.PowerMin = clamp(v, 0.0, 1.0) end
+})
+local S_PowerMax = add_slider(TabFishing, {
+    Title = "Power Max",
+    Min = 0.0, Max = 1.0, Value = CFG.PowerMax, Rounding = 2,
+    Callback = function(v) CFG.PowerMax = clamp(v, 0.0, 1.0) end
+})
+
+-- Tombol Kill
+local Btn_Kill = TabFishing:Button({
+    Title = "Kill / Unload",
+    Icon  = "skull",
+    Callback = function()
+        CFG.Run = false
+        AutoFishing:Kill()
+        toggle_set(Tgl_Run, false)
+        dprint("Killed")
+    end
+})
+
+-- UI refresher
 task.spawn(function()
-    while task.wait(1) do
-        toggle_set(Tgl_AutoFish, CFG.Run)
+    while task.wait(0.5) do
+        -- sync toggle utama bila berubah dari luar
+        toggle_set(Tgl_Run, CFG.Run)
+        -- update status
+        if StatusLabel and type(StatusLabel.SetTitle) == "function" then
+            StatusLabel:SetTitle(("Status: Casts %d | Completes %d"):format(casts, completes))
+        end
     end
 end)
 
-print("[.devlogic] Auto Fishing loaded OK")
+print("[.devlogic] dlogicfish.lua loaded")
+
