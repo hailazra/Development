@@ -20,7 +20,6 @@ WindUI:AddTheme({
 })
 
 -- Window
-Create Window (docs: Window:CreateWindow)
 local Window = WindUI:CreateWindow({
     Title         = ".devlogic",
     Icon          = "brain-circuit",
@@ -320,4 +319,5 @@ end)
 
 Window:OnDestroy(function()
     print("Window destroyed")
+
 end)
