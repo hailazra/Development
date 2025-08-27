@@ -427,6 +427,46 @@ local function buildPlaceEggCFGFromState()
     return getgenv().PlaceEggCFG
 end
 
+-- ===== Handler: Auto Place Selected Egg =====
+local function buildPlaceEggCFGFromState()
+  local S = getgenv().RemnantState
+  local E = S.Egg
+  local selectedName = ""
+  if type(E.EggsToPlace) == "table" and #E.EggsToPlace > 0 then
+    selectedName = tostring(E.EggsToPlace[1]) -- ambil item pertama dari multi-select
+  end
+
+  return {
+    SelectedEggName = selectedName,
+    MaxSlots        = tonumber(E.SlotEgg) or 1,
+    MinEggGap       = 3.0,      -- default aman (tidak ada UI khusus di RemnantDEV)
+    GridStep        = 1.0,      -- default
+    OwnerFilter     = true,     -- default: hanya milik sendiri
+    Run             = true,
+  }
+end
+
+local function startAutoPlaceSelectedEgg()
+  local G = getgenv()
+  G.PlaceEggCFG = buildPlaceEggCFGFromState()
+
+  local url = (G.RemnantFeatures and G.RemnantFeatures.AutoPlaceSelectedEgg)
+              or "https://raw.githubusercontent.com/hailazra/Development/refs/heads/main/Features/AutoPlaceEgg.lua"
+
+  -- Gunakan RemnantLoader supaya modul dapat ctx (Globals/UI/State/Tasks)
+  pcall(function()
+    getgenv().RemnantLoader.Start("auto_place_selected_egg", url)
+  end)
+end
+
+local function stopAutoPlaceSelectedEgg()
+  local G = getgenv()
+  -- Modul expose Stop lewat Loader, plus konvensi _G.PlaceEggKILL
+  pcall(function() getgenv().RemnantLoader.Stop("auto_place_selected_egg") end)
+  if rawget(G, "PlaceEggKILL") then pcall(G.PlaceEggKILL) end
+end
+
+
 --======================================================
 -- 6) HOME
 --======================================================
@@ -762,35 +802,47 @@ TabEggRef:Section({ Title = "Place Egg", TextXAlignment = "Left", TextSize = 17 
 local DD_Egg_SelectPlace = TabEggRef:Dropdown({
     Title = "Select Egg", Multi = true, Values = {}, Default = {}, Placeholder = "Choose eggs...",
     Callback = function(list)
-        State.Egg.EggsToPlace = list
-        -- optional: update SelectedEggName dari list pertama
-        State.Egg.SelectedEggName = (list and list[1]) or State.Egg.SelectedEggName or ""
-    end
+  State.Egg.EggsToPlace = list
+  if getgenv().PlaceEggCFG then
+    getgenv().PlaceEggCFG.SelectedEggName = (type(list)=="table" and list[1]) or ""
+  end
+end
+
 })
 local IN_Egg_Slot = TabEggRef:Input({
     Title = "Slot Egg", Placeholder = "e.g. 1", Numeric = true,
-    Callback = function(v) State.Egg.SlotEgg = tonumber(v) or 1 end
+   Callback = function(v)
+  local n = tonumber(v)
+  State.Egg.SlotEgg = n
+  if getgenv().PlaceEggCFG then getgenv().PlaceEggCFG.MaxSlots = n or 1 end
+end
 })
 TabEggRef:Button({
     Title = "Refresh Egg", Icon = "refresh-ccw",
     Callback = function()
-        -- TODO: refresh daftar egg (inventory)
+  -- Minta modul untuk re-push list (kalau sudah aktif)
+  local uiAPI = getgenv().RemnantUI and getgenv().RemnantUI.API and getgenv().RemnantUI.API.Egg
+  if uiAPI and uiAPI.SetEggListForPlace and uiAPI.SetEggListForHatch then
+    -- Kalau modul aktif, dia juga auto-sync via Backpack events.
+    -- Di sini cukup trigger ulang start supaya pushEggListToUI() jalan.
+    if getgenv().RemnantState.Egg.AutoPlaceEgg then
+      stopAutoPlaceSelectedEgg()
+      task.wait(0.1)
+      startAutoPlaceSelectedEgg()
     end
+  end
+end
 })
 local TG_Egg_AutoPlace = TabEggRef:Toggle({
     Title = "Auto Place Egg", Default = false,
-    Callback = function(on)
-        State.Egg.AutoPlaceEgg = on
-        local url = F.AutoPlaceSelectedEGG
-        if on then
-            buildPlaceEggCFGFromState()
-            Loader.Start("auto_place_selected_egg", url)
-            toast("Auto Place Egg: ON")
-        else
-            Loader.Stop("auto_place_selected_egg")
-            toast("Auto Place Egg: OFF")
-        end
-    end
+   Callback = function(on)
+  State.Egg.AutoPlaceEgg = on
+  if on then
+    startAutoPlaceSelectedEgg()
+  else
+    stopAutoPlaceSelectedEgg()
+  end
+end
 })
 
 TabEggRef:Section({ Title = "Hatch Egg", TextXAlignment = "Left", TextSize = 17 })
