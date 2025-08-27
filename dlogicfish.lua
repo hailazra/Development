@@ -16,6 +16,38 @@ local Window = WindUI:CreateWindow({
     HideSearchBar = true,
 })
 
+-- === Topbar Changelog (simple) ===
+local CHANGELOG = table.concat({
+    "• v0.1.2 — 2025-08-27",
+    "  - Add Topbar Changelog button",
+    "",
+    "• v0.1.1 — 2025-08-26",
+    "  - Fix Weather section",
+    "  - Stabilize Dropdown getters",
+}, "\n")
+
+local function ShowChangelog()
+    Window:Dialog({
+        Title   = "Changelog",
+        Content = CHANGELOG,
+        Buttons = {
+            {
+                Title   = "Copy",
+                Icon    = "copy",
+                Variant = "Secondary",
+                Callback = function()
+                    setclipboard(CHANGELOG)
+                    WindUI:Notify({ Title = "Copied", Content = "Changelog copied", Icon = "check", Duration = 2 })
+                end
+            },
+            { Title = "Close", Variant = "Primary" }
+        }
+    })
+end
+
+-- name, icon, callback, order
+Window:CreateTopbarButton("changelog", "newspaper", ShowChangelog, 995)
+
 --========== STATE & SAFE FUNCS ==========
 local prev = rawget(getgenv(), "logicdevui")
 local Controls  = (prev and prev.Controls)  or {}
@@ -141,6 +173,7 @@ do -- Item
         Title  = "Select Item",
         Values = { "Bait", "Lure", "Fish Finder" },
         Value  = "Bait",
+        Multi  =  true, 
         Callback = function(_) end
     })
 
