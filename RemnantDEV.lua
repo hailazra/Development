@@ -293,30 +293,26 @@ F.AutoPlaceSelectedEGG = F.AutoPlaceSelectedEGG or "https://raw.githubuserconten
 getgenv().RemnantTasks = getgenv().RemnantTasks or {}
 local Tasks = getgenv().RemnantTasks
 
-function Tasks.Start(name, runnerFn) -- runnerFn harus return stopperFn (optional)
-    Tasks.Stop(name)
-    local alive = true
-    local stopper
-    task.spawn(function()
-        stopper = runnerFn(function() return alive end)
-    end)
-    Tasks[name] = {
-        alive = function() return alive end,
-        stop  = function()
-            alive = false
-            if stopper then pcall(stopper) end
-        end
-    }
-end
-
 function Tasks.Stop(name)
     local t = Tasks[name]
-    if t and t.stop then pcall(t.stop) end
-    Tasks[name] = nil
+    -- Hanya stop jika entri task adalah table (bukan fungsi method)
+    if type(t) == "table" and t.stop then
+        pcall(t.stop)
+    end
+    -- Jangan menghapus field method ("Start","Stop","StopAll")
+    if type(Tasks[name]) == "table" then
+        Tasks[name] = nil
+    end
 end
 
 function Tasks.StopAll()
-    for k in pairs(Tasks) do Tasks.Stop(k) end
+    -- Loop aman: hanya iterasi entri task yang bertipe table
+    for k, v in pairs(Tasks) do
+        if type(v) == "table" and v.stop then
+            pcall(v.stop)
+            Tasks[k] = nil
+        end
+    end
 end
 
 --======================================================
