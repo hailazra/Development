@@ -109,7 +109,7 @@ end
 
 --========== SHOP → ITEM & WEATHER ==========
 local SecShopItem    = TabShop:Section({ Title = "Item",    Icon = "wrench",    Opened = true })
-local SecShopWeather = TabShop:Section({ Title = "Weather", Icon = "cloud-sun", Opened = false })
+local SecShopWeather = TabShop:Section({ Title = "Weather", Icon = "cloud-sun", Opened = true })
 
 do -- Item
     local RodShop = SecShopItem:Dropdown({
