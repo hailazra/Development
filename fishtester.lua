@@ -1,8 +1,8 @@
 --========================================================
--- .devlogic — Auto Fishing (Single File, WindUI-correct)
+-- .devlogic — Auto Fishing (Single File, WindUI fail-safe)
 --========================================================
 
--- Config
+-- ===== Config =====
 getgenv().AutoFishCFG = getgenv().AutoFishCFG or {
     Run = false,
     CastDelayMin = 1.6,
@@ -15,22 +15,27 @@ getgenv().AutoFishCFG = getgenv().AutoFishCFG or {
     DebugPrint   = false,
 }
 local CFG = getgenv().AutoFishCFG
+local function dprint(...) if CFG.DebugPrint then print("[AutoFishing]", ...) end end
 
--- Services & Remotes
+-- ===== Services & Remotes =====
 local RS          = game:GetService("ReplicatedStorage")
 local Players     = game:GetService("Players")
 local RunService  = game:GetService("RunService")
 local LP          = Players.LocalPlayer
 
-local NetRoot     = RS:WaitForChild("Packages"):WaitForChild("_Index")
-                     :WaitForChild("sleitnick_net@0.2.0"):WaitForChild("net")
-local RF_Charge   = NetRoot:WaitForChild("RF/ChargeFishingRod")
-local RF_StartMG  = NetRoot:WaitForChild("RF/RequestFishingMinigameStarted")
-local RE_Done     = NetRoot:WaitForChild("RE/FishingCompleted")
+local function req(path, name)
+    local node = path:WaitForChild(name)
+    if not node then error("Missing: "..name) end
+    return node
+end
 
--- Utils
-local function dprint(...) if CFG.DebugPrint then print("[AutoFishing]", ...) end end
-local function randf(a,b) return a + (b-a) * math.random() end
+local NetRoot = req(req(req(req(RS, "Packages"), "_Index"), "sleitnick_net@0.2.0"), "net")
+local RF_Charge  = req(NetRoot, "RF/ChargeFishingRod")
+local RF_StartMG = req(NetRoot, "RF/RequestFishingMinigameStarted")
+local RE_Done    = req(NetRoot, "RE/FishingCompleted")
+
+-- ===== Utils =====
+local function randf(a,b) return a + (b-a)*math.random() end
 local function Humanoid()
     local c = LP.Character
     return c and c:FindFirstChildOfClass("Humanoid")
@@ -41,18 +46,13 @@ local function EquipRodIfNeeded()
     local hum = Humanoid()
     local char = LP.Character
     if not hum or not char then return false end
-
     if char:FindFirstChildOfClass("Tool") then return true end
-
-    local bp = LP:FindFirstChildOfClass("Backpack")
-    if not bp then return false end
+    local bp = LP:FindFirstChildOfClass("Backpack"); if not bp then return false end
     for _, tool in ipairs(bp:GetChildren()) do
         if tool:IsA("Tool") then
             local n = tool.Name:lower()
             if n:find("rod") or n:find("fish") then
-                hum:EquipTool(tool)
-                dprint("Equip rod:", tool.Name)
-                return true
+                hum:EquipTool(tool); dprint("Equip rod:", tool.Name); return true
             end
         end
     end
@@ -79,7 +79,7 @@ local function OneCast()
     SafeFire(RE_Done)
 end
 
--- Runner
+-- ===== Runner =====
 local AutoFishing = getgenv().LogicDev_AutoFishing or {}
 AutoFishing._running = AutoFishing._running or false
 AutoFishing._looping = AutoFishing._looping or false
@@ -106,11 +106,22 @@ function AutoFishing:Start()
 end
 getgenv().LogicDev_AutoFishing = AutoFishing
 
---====================== WindUI (loader & GUI) ======================
--- Use the same loader pattern as the official example:
-local WindUI = loadstring(game:HttpGet(
-    "https://raw.githubusercontent.com/Footagesus/WindUI/main/dist/main.lua"
-))()
+-- ===== WindUI (robust loader + API fallback) =====
+-- Coba release dist dulu (lebih stabil). Jika gagal, fallback ke releases/latest.
+local WindUI
+do
+    local ok, lib = pcall(function()
+        return loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/main/dist/main.lua"))()
+    end)
+    if not ok or type(lib) ~= "table" or type(lib.CreateWindow) ~= "function" then
+        warn("[WindUI] dist loader gagal, coba releases/latest")
+        ok, lib = pcall(function()
+            return loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
+        end)
+    end
+    assert(type(lib)=="table" and type(lib.CreateWindow)=="function", "[WindUI] CreateWindow tidak tersedia")
+    WindUI = lib
+end
 
 local Window = WindUI:CreateWindow({
     Title         = ".devlogic",
@@ -124,13 +135,47 @@ local Window = WindUI:CreateWindow({
     HideSearchBar = true,
 })
 
-local SecMain    = Window:Section({ Title = "Main", Icon = "gamepad", Opened = true })
-local TabFishing = SecMain:Tab({ Title = "Fishing", Icon = "fish" })
+-- Beberapa versi WindUI ada yang: Window:Section():Tab()
+-- Versi lain langsung: Window:Tab() tanpa Section.
+local SecMain
+if type(Window.Section) == "function" then
+    SecMain = Window:Section({ Title = "Main", Icon = "gamepad", Opened = true })
+else
+    SecMain = Window -- fallback: pakai Window langsung
+end
 
-local Tgl_AutoFish = TabFishing:Toggle({
+local TabFishing
+if type(SecMain.Tab) == "function" then
+    TabFishing = SecMain:Tab({ Title = "Fishing", Icon = "fish" })
+elseif type(Window.Tab) == "function" then
+    TabFishing = Window:Tab({ Title = "Fishing", Icon = "fish" })
+else
+    error("[WindUI] Tidak menemukan method :Tab() pada Window/Section")
+end
+assert(TabFishing, "[WindUI] Gagal membuat Tab")
+
+-- Toggle API juga kadang beda: pastikan field dan setter aman.
+local function toggle_create(scope, opts)
+    assert(type(scope.Toggle) == "function", "[WindUI] Method :Toggle() tidak ada")
+    return scope:Toggle(opts)
+end
+
+local function toggle_set(tgl, v)
+    if tgl and type(tgl.Set) == "function" then
+        tgl:Set(v)
+    elseif tgl and type(tgl.SetValue) == "function" then
+        tgl:SetValue(v)
+    else
+        -- tidak ada setter? abaikan sinkronisasi
+    end
+end
+
+local Tgl_AutoFish = toggle_create(TabFishing, {
     Title   = "Auto Fishing",
     Desc    = "Cast → Minigame → Complete",
-    Value   = CFG.Run,                 -- ✅ WindUI expects 'Value', not 'Default'
+    -- WindUI variasi: "Value" / "Default" — kita set keduanya supaya aman
+    Value   = CFG.Run,
+    Default = CFG.Run,
     Callback = function(state)
         CFG.Run = state
         AutoFishing:SetRun(state)
@@ -138,11 +183,11 @@ local Tgl_AutoFish = TabFishing:Toggle({
     end
 })
 
--- Keep UI state in sync if changed elsewhere
+-- Sinkronisasi UI jika nilai berubah dari luar
 task.spawn(function()
     while task.wait(1) do
-        if Tgl_AutoFish and Tgl_AutoFish.Set then
-            Tgl_AutoFish:Set(CFG.Run) -- ✅ WindUI Toggle exposes :Set(...)
-        end
+        toggle_set(Tgl_AutoFish, CFG.Run)
     end
 end)
+
+print("[.devlogic] Auto Fishing loaded OK")
