@@ -1361,6 +1361,7 @@ local function _onWindowClose()
     end
 end
 
+-- Hanya pasang handler untuk close/destroy, BUKAN minimize
 if Window.OnClose then
     Window:OnClose(_onWindowClose)
 elseif Window.OnDestroy then
@@ -1371,6 +1372,14 @@ else
         _onWindowClose()
         return oldDestroy(self, ...)
     end
+end
+
+-- Jika WindUI punya event minimize, jangan matikan fitur di sana
+if Window.OnMinimize then
+    Window:OnMinimize(function()
+        -- Jangan matikan fitur apapun di sini!
+        -- Bisa tambahkan logika lain jika perlu
+    end)
 end
 
 --======================================================
