@@ -1,154 +1,96 @@
 --========================================================
--- .devlogic — Auto Fishing (Single File: GUI + Logic)
+-- .devlogic — Auto Fishing (Single File, WindUI-correct)
 --========================================================
--- Fitur:
---  - WindUI GUI: 1 Tab "Fishing" berisi Toggle "Auto Fishing"
---  - Auto-equip rod (heuristik nama mengandung "rod"/"fishing")
---  - Humanized timing & parameter (aim/power) biar gak terlalu bot-ish
---  - Kill/Unload via Key: END
--- Catatan:
---  - Sesuaikan range AIM/POWER & delay jika perlu.
---  - Jika game menambah step minigame, tambahkan RPC di bagian TAP-TAP.
 
---====================== Konfigurasi ======================
+-- Config
 getgenv().AutoFishCFG = getgenv().AutoFishCFG or {
     Run = false,
-    CastDelayMin = 1.6,   -- jeda minimal antar cast (detik)
-    CastDelayMax = 2.8,   -- jeda maksimal antar cast
-    PowerMin     = 0.88,  -- 0..1
-    PowerMax     = 0.98,  -- 0..1
-    AimMin       = -0.25, -- -1..1 (kiri/kanan)
-    AimMax       =  0.25, -- -1..1 (kiri/kanan)
+    CastDelayMin = 1.6,
+    CastDelayMax = 2.8,
+    PowerMin     = 0.88,
+    PowerMax     = 0.98,
+    AimMin       = -0.25,
+    AimMax       =  0.25,
     AutoEquipRod = true,
     DebugPrint   = false,
 }
 local CFG = getgenv().AutoFishCFG
 
---====================== Services & Remotes ==============
-local RS            = game:GetService("ReplicatedStorage")
-local Players       = game:GetService("Players")
-local RunService    = game:GetService("RunService")
-local LocalPlayer   = Players.LocalPlayer
+-- Services & Remotes
+local RS          = game:GetService("ReplicatedStorage")
+local Players     = game:GetService("Players")
+local RunService  = game:GetService("RunService")
+local LP          = Players.LocalPlayer
 
--- Path dari rspy kamu
-local NetRoot       = RS:WaitForChild("Packages"):WaitForChild("_Index"):WaitForChild("sleitnick_net@0.2.0"):WaitForChild("net")
-local RF_Charge     = NetRoot:WaitForChild("RF/ChargeFishingRod")
-local RF_StartMG    = NetRoot:WaitForChild("RF/RequestFishingMinigameStarted")
-local RE_Completed  = NetRoot:WaitForChild("RE/FishingCompleted")
+local NetRoot     = RS:WaitForChild("Packages"):WaitForChild("_Index")
+                     :WaitForChild("sleitnick_net@0.2.0"):WaitForChild("net")
+local RF_Charge   = NetRoot:WaitForChild("RF/ChargeFishingRod")
+local RF_StartMG  = NetRoot:WaitForChild("RF/RequestFishingMinigameStarted")
+local RE_Done     = NetRoot:WaitForChild("RE/FishingCompleted")
 
---====================== Utils ===========================
-local function dprint(...)
-    if CFG.DebugPrint then
-        print("[AutoFishing]", ...)
-    end
-end
-
-local function randf(a, b)
-    return a + (b - a) * math.random()
-end
-
+-- Utils
+local function dprint(...) if CFG.DebugPrint then print("[AutoFishing]", ...) end end
+local function randf(a,b) return a + (b-a) * math.random() end
 local function Humanoid()
-    local char = LocalPlayer.Character
-    if not char then return nil end
-    return char:FindFirstChildOfClass("Humanoid")
+    local c = LP.Character
+    return c and c:FindFirstChildOfClass("Humanoid")
 end
 
 local function EquipRodIfNeeded()
     if not CFG.AutoEquipRod then return true end
-    local char = LocalPlayer.Character
     local hum = Humanoid()
-    if not char or not hum then return false end
+    local char = LP.Character
+    if not hum or not char then return false end
 
-    -- Sudah pegang tool?
-    if char:FindFirstChildOfClass("Tool") then
-        return true
-    end
+    if char:FindFirstChildOfClass("Tool") then return true end
 
-    -- Cari rod di Backpack
-    local backpack = LocalPlayer:FindFirstChildOfClass("Backpack")
-    if not backpack then return false end
-    local target = nil
-    for _, tool in ipairs(backpack:GetChildren()) do
+    local bp = LP:FindFirstChildOfClass("Backpack")
+    if not bp then return false end
+    for _, tool in ipairs(bp:GetChildren()) do
         if tool:IsA("Tool") then
             local n = tool.Name:lower()
             if n:find("rod") or n:find("fish") then
-                target = tool
-                break
+                hum:EquipTool(tool)
+                dprint("Equip rod:", tool.Name)
+                return true
             end
         end
-    end
-    if target then
-        hum:EquipTool(target)
-        dprint("Equip rod:", target.Name)
-        return true
     end
     return false
 end
 
 local function SafeInvoke(rf, ...)
-    local ok, res = pcall(function()
-        return rf:InvokeServer(...)
-    end)
+    local ok, res = pcall(function() return rf:InvokeServer(...) end)
     if not ok then dprint("Invoke error:", res) end
     return ok, res
 end
 
 local function SafeFire(re, ...)
-    local ok, err = pcall(function()
-        re:FireServer(...)
-    end)
+    local ok, err = pcall(function() re:FireServer(...) end)
     if not ok then dprint("Fire error:", err) end
     return ok
 end
 
--- Satu siklus mancing
 local function OneCast()
-    -- 1) Pastikan rod siap
-    if not EquipRodIfNeeded() then
-        dprint("Rod not found / not equipped")
-        return
-    end
-
-    -- 2) Charge rod — pakai timestamp-ish float (mirip behavior asli)
-    local ts = os.clock() + math.random()
-    SafeInvoke(RF_Charge, ts)
-
-    -- 3) Start minigame — (aim, power)
-    local aim   = randf(CFG.AimMin,   CFG.AimMax)
-    local power = randf(CFG.PowerMin, CFG.PowerMax)
-    SafeInvoke(RF_StartMG, aim, power)
-
-    -- 4) “Tap-tap” minigame: kalau suatu saat butuh RPC tambahan, tambah di sini
+    if not EquipRodIfNeeded() then dprint("Rod not found/equipped"); return end
+    SafeInvoke(RF_Charge, os.clock() + math.random())
+    SafeInvoke(RF_StartMG, randf(CFG.AimMin, CFG.AimMax), randf(CFG.PowerMin, CFG.PowerMax))
     task.wait(randf(0.6, 1.2))
-
-    -- 5) Complete
-    SafeFire(RE_Completed)
+    SafeFire(RE_Done)
 end
 
---====================== Runner State =====================
+-- Runner
 local AutoFishing = getgenv().LogicDev_AutoFishing or {}
 AutoFishing._running = AutoFishing._running or false
 AutoFishing._looping = AutoFishing._looping or false
-
-function AutoFishing:SetRun(v)
-    self._running = v and true or false
-end
-
-function AutoFishing:Kill()
-    self._running = false
-    self._looping = false
-end
-
+function AutoFishing:SetRun(v) self._running = v and true or false end
+function AutoFishing:Kill() self._running = false self._looping = false end
 function AutoFishing:Start()
     if self._looping then return end
     self._looping = true
-    dprint("Start loop")
-
     task.spawn(function()
         while self._looping do
-            if not self._running then
-                RunService.Heartbeat:Wait()
-            else
+            if self._running then
                 local hum = Humanoid()
                 if hum and hum.Health > 0 then
                     OneCast()
@@ -156,17 +98,18 @@ function AutoFishing:Start()
                 else
                     task.wait(1)
                 end
+            else
+                RunService.Heartbeat:Wait()
             end
         end
-        dprint("Loop ended")
     end)
 end
-
 getgenv().LogicDev_AutoFishing = AutoFishing
 
---====================== GUI (WindUI) =====================
+--====================== WindUI (loader & GUI) ======================
+-- Use the same loader pattern as the official example:
 local WindUI = loadstring(game:HttpGet(
-    "https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"
+    "https://raw.githubusercontent.com/Footagesus/WindUI/main/dist/main.lua"
 ))()
 
 local Window = WindUI:CreateWindow({
@@ -186,33 +129,20 @@ local TabFishing = SecMain:Tab({ Title = "Fishing", Icon = "fish" })
 
 local Tgl_AutoFish = TabFishing:Toggle({
     Title   = "Auto Fishing",
-    Icon    = "fish",
-    Default = CFG.Run,
+    Desc    = "Cast → Minigame → Complete",
+    Value   = CFG.Run,                 -- ✅ WindUI expects 'Value', not 'Default'
     Callback = function(state)
         CFG.Run = state
         AutoFishing:SetRun(state)
-        if state then
-            AutoFishing:Start()
-        end
+        if state then AutoFishing:Start() end
     end
 })
 
--- Sinkronisasi (kalau CFG.Run diubah dari luar)
+-- Keep UI state in sync if changed elsewhere
 task.spawn(function()
     while task.wait(1) do
         if Tgl_AutoFish and Tgl_AutoFish.Set then
-            Tgl_AutoFish:Set(CFG.Run)
+            Tgl_AutoFish:Set(CFG.Run) -- ✅ WindUI Toggle exposes :Set(...)
         end
     end
 end)
-
--- Kill/Unload cepat
-Window:Keybind({
-    Title = "Kill Auto Fishing",
-    Key = Enum.KeyCode.End,
-    Callback = function()
-        CFG.Run = false
-        AutoFishing:Kill()
-        if CFG.DebugPrint then print("[AutoFishing] Killed") end
-    end
-})
