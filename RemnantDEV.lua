@@ -111,6 +111,9 @@ local SecMisc = Window:Section({ Title = "Misc", Icon = "settings-2", Opened = f
 local TabMisc_AUE = SecMisc:Tab({ Title = "AUE", Icon = "refresh-ccw" })
 local TabMisc_ESP = SecMisc:Tab({ Title = "ESP", Icon = "eye" })
 
+local UI_NS = { Events = {} }
+
+
 --======================================================
 -- Save references (preserve Controls registry)
 --======================================================
