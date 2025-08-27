@@ -257,7 +257,7 @@ State.ESP = State.ESP or {
 
 -- ===== Feature registry (URL modul eksternal) =====
 getgenv().RemnantFeatures = getgenv().RemnantFeatures or {}
-getgenv().RemnantFeatures.AutoCollectFruit = "loadstring(game:HttpGet("https://raw.githubusercontent.com/hailazra/Development/refs/heads/main/Features/AutoCollect.lua"))()"  -- ganti ke raw URL kamu
+getgenv().RemnantFeatures.AutoCollectFruit = "https://raw.githubusercontent.com/hailazra/Development/refs/heads/main/Features/AutoCollect.lua"  -- ganti ke raw URL kamu
 
 -- ===== API helper utk isi dropdown dari modul =====
 do
