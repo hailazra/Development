@@ -1,5 +1,4 @@
-
--- WindUI Library as Main Library
+-- WindUI Library
 local WindUI = loadstring(game:HttpGet(
     "https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"
 ))()
@@ -17,36 +16,45 @@ local Window = WindUI:CreateWindow({
     HideSearchBar = true,
 })
 
---========== GUARD + STATE ==========
--- keep old controls if exist
-local _oldUI     = rawget(getgenv(), "logicdevui")
-local _controls  = (_oldUI and _oldUI.Controls) or {}
+--========== STATE & SAFE FUNCS ==========
+local prev = rawget(getgenv(), "logicdevui")
+local Controls  = (prev and prev.Controls)  or {}
 
--- safe function table (no-op wrappers) -> tidak bikin error kalau belum kamu isi
-local _funcs = (_oldUI and _oldUI.Functions) or {}
-local function _safe(fn) return (type(fn) == "function") and fn or function() end end
+local Funcs = (prev and prev.Functions) or {}
+local function ensure(fn) return (type(fn) == "function") and fn or function() end end
 
--- placeholder/no-op agar gak error saat dipanggil
-_funcs.SetDelayCast       = _funcs.SetDelayCast       or function(_) end
-_funcs.StartAutoCast      = _funcs.StartAutoCast      or function() end
-_funcs.StopAutoCast       = _funcs.StopAutoCast       or function() end
-_funcs.StartAutoReel      = _funcs.StartAutoReel      or function() end
-_funcs.StopAutoReel       = _funcs.StopAutoReel       or function() end
-_funcs.StartAutoFishing   = _funcs.StartAutoFishing   or function() end
-_funcs.StopAutoFishing    = _funcs.StopAutoFishing    or function() end
-_funcs.BuyRod             = _funcs.BuyRod             or function(_) end
-_funcs.BuyItem            = _funcs.BuyItem            or function(_, _) end
-_funcs.BuyWeather         = _funcs.BuyWeather         or function(_) end
-_funcs.TeleportToLocation = _funcs.TeleportToLocation or function(_) end
-_funcs.EnableWalkOnWater  = _funcs.EnableWalkOnWater  or function() end
-_funcs.DisableWalkOnWater = _funcs.DisableWalkOnWater or function() end
-_funcs.EnableAntiOxygen   = _funcs.EnableAntiOxygen   or function() end
-_funcs.DisableAntiOxygen  = _funcs.DisableAntiOxygen  or function() end
-_funcs.SetWebhookURL      = _funcs.SetWebhookURL      or function(_) end
-_funcs.EnableWebhook      = _funcs.EnableWebhook      or function() end
-_funcs.DisableWebhook     = _funcs.DisableWebhook     or function() end
+-- bind no-op agar sesuai WindUI call flow (tidak error walau kosong)
+Funcs.SetDelayCast       = ensure(Funcs.SetDelayCast)
+Funcs.StartAutoCast      = ensure(Funcs.StartAutoCast)
+Funcs.StopAutoCast       = ensure(Funcs.StopAutoCast)
+Funcs.StartAutoReel      = ensure(Funcs.StartAutoReel)
+Funcs.StopAutoReel       = ensure(Funcs.StopAutoReel)
+Funcs.StartAutoFishing   = ensure(Funcs.StartAutoFishing)
+Funcs.StopAutoFishing    = ensure(Funcs.StopAutoFishing)
+Funcs.BuyRod             = ensure(Funcs.BuyRod)
+Funcs.BuyItem            = ensure(Funcs.BuyItem)
+Funcs.BuyWeather         = ensure(Funcs.BuyWeather)
+Funcs.TeleportToLocation = ensure(Funcs.TeleportToLocation)
+Funcs.EnableWalkOnWater  = ensure(Funcs.EnableWalkOnWater)
+Funcs.DisableWalkOnWater = ensure(Funcs.DisableWalkOnWater)
+Funcs.EnableAntiOxygen   = ensure(Funcs.EnableAntiOxygen)
+Funcs.DisableAntiOxygen  = ensure(Funcs.DisableAntiOxygen)
+Funcs.SetWebhookURL      = ensure(Funcs.SetWebhookURL)
+Funcs.EnableWebhook      = ensure(Funcs.EnableWebhook)
+Funcs.DisableWebhook     = ensure(Funcs.DisableWebhook)
 
---========== TABS (SIDEBAR) ==========
+-- helper ambil value kontrol yg compatible
+local function getValue(ctrl)
+    if ctrl == nil then return nil end
+    if type(ctrl.GetValue) == "function" then
+        local ok, v = pcall(ctrl.GetValue, ctrl)
+        if ok then return v end
+    end
+    -- fallback properti umum
+    return rawget(ctrl, "Value")
+end
+
+--========== TABS ==========
 local TabHome     = Window:Tab({ Title = "Home",     Icon = "house" })
 local TabMain     = Window:Tab({ Title = "Main",     Icon = "gamepad" })
 local TabShop     = Window:Tab({ Title = "Shop",     Icon = "shopping-cart" })
@@ -56,99 +64,93 @@ local TabMisc     = Window:Tab({ Title = "Misc",     Icon = "cog" })
 --========== HOME ==========
 do
     TabHome:Section({ Title = ".devlogic", TextXAlignment = "Left", TextSize = 17 })
-    -- isi Home sesuai kebutuhan kamu (changelog, discord, dsb.)
+    -- tambahin changelog/discord nanti di sini
 end
 
---========== MAIN → FISHING SECTION ==========
+--========== MAIN → FISHING ==========
 local SecFishing = TabMain:Section({ Title = "Fishing", Icon = "fish", Opened = true })
 
 do
-    local DelayCast = SecFishing:Input({
+    SecFishing:Input({
         Title = "Auto Cast Delay",
         Placeholder = "Delay Cast (s)",
-        Value = tostring(_controls.DelayCast or 500),
+        Value = tostring(Controls.DelayCast or 500),
         Description = "Delay before casting the fishing rod.",
         NumbersOnly = true,
         Callback = function(value)
-            local numValue = tonumber(value) or 500
-            _controls.DelayCast = numValue
-            _funcs.SetDelayCast(numValue)
+            local num = tonumber(value) or 500
+            Controls.DelayCast = num
+            Funcs.SetDelayCast(num)
         end
     })
 
-    local AutoCast = SecFishing:Toggle({
+    SecFishing:Toggle({
         Title = "Auto Cast",
-        State = _controls.AutoCast or false,
+        State = Controls.AutoCast or false,
         Description = "Automatically casts your fishing rod.",
         Callback = function(state)
-            _controls.AutoCast = state
-            if state then _funcs.StartAutoCast() else _funcs.StopAutoCast() end
+            Controls.AutoCast = state
+            if state then Funcs.StartAutoCast() else Funcs.StopAutoCast() end
         end
     })
 
-    local AutoReel = SecFishing:Toggle({
+    SecFishing:Toggle({
         Title = "Auto Reel",
-        State = _controls.AutoReel or false,
+        State = Controls.AutoReel or false,
         Description = "Automatically reels in your fishing rod.",
         Callback = function(state)
-            _controls.AutoReel = state
-            if state then _funcs.StartAutoReel() else _funcs.StopAutoReel() end
+            Controls.AutoReel = state
+            if state then Funcs.StartAutoReel() else Funcs.StopAutoReel() end
         end
     })
 
-    local AutoFishing = SecFishing:Toggle({
+    SecFishing:Toggle({
         Title = "Auto Fishing",
-        State = _controls.AutoFishing or false,
+        State = Controls.AutoFishing or false,
         Description = "Automatically fishes for you.",
         Callback = function(state)
-            _controls.AutoFishing = state
-            if state then _funcs.StartAutoFishing() else _funcs.StopAutoFishing() end
+            Controls.AutoFishing = state
+            if state then Funcs.StartAutoFishing() else Funcs.StopAutoFishing() end
         end
     })
 end
 
 --========== SHOP → ITEM & WEATHER ==========
-local SecShopItem    = TabShop:Section({ Title = "Item",    Icon = "wrench",    Opened = true })
-local SecShopWeather = TabShop:Section({ Title = "Weather", Icon = "cloud-sun", Opened = true })
+-- Catatan: ganti icon "cloud-sun" → "cloud" (lebih aman di Lucide)
+local SecShopItem    = TabShop:Section({ Title = "Item",    Icon = "wrench", Opened = true })
+local SecShopWeather = TabShop:Section({ Title = "Weather", Icon = "cloud",  Opened = false })
 
 do -- Item
-    local RodShop = SecShopItem:Dropdown({
-        Title = "Select Rod",
+    local RodDropdown = SecShopItem:Dropdown({
+        Title  = "Select Rod",
         Values = { "Ares", "Astral", "Luck" },
         Value  = "Ares",
-        Callback = function(option)
-            -- print("Rod selected: " .. tostring(option))
-        end
+        Callback = function(_) end
     })
 
     SecShopItem:Button({
         Title = "Buy Rod",
         Description = "Purchase the selected fishing rod.",
         Callback = function()
-            local selectedRod = RodShop.Value
-            _funcs.BuyRod(selectedRod)
+            local selected = getValue(RodDropdown)
+            Funcs.BuyRod(selected)
         end
     })
 
-    local ItemShop = SecShopItem:Dropdown({
-        Title = "Select Item",
+    local ItemDropdown = SecShopItem:Dropdown({
+        Title  = "Select Item",
         Values = { "Bait", "Lure", "Fish Finder" },
         Value  = "Bait",
-        Multi  = true,
-        AllowNone = true,
-        Callback = function(option)
-            -- print("Item selected: " .. tostring(option))
-        end
+        Callback = function(_) end
     })
 
-    SecShopItem:Input({
+    local QtyBox = SecShopItem:Input({
         Title = "Item Quantity",
         Placeholder = "Enter quantity",
-        Value = tostring(_controls.BuyItemQuantity or 1),
+        Value = tostring(Controls.BuyItemQuantity or 1),
         NumbersOnly = true,
-        Callback = function(value)
-            local numValue = tonumber(value) or 1
-            _controls.BuyItemQuantity = numValue
+        Callback = function(v)
+            Controls.BuyItemQuantity = tonumber(v) or 1
         end
     })
 
@@ -156,78 +158,74 @@ do -- Item
         Title = "Buy Item",
         Description = "Purchase the selected item in the specified quantity.",
         Callback = function()
-            local selectedItem = ItemShop.Value
-            local quantity     = _controls.BuyItemQuantity or 1
-            _funcs.BuyItem(selectedItem, quantity)
+            local item  = getValue(ItemDropdown)
+            local qty   = Controls.BuyItemQuantity or 1
+            Funcs.BuyItem(item, qty)
         end
     })
 end
 
 do -- Weather
-    local WeatherShop = SecShopWeather:Dropdown({
-        Title = "Select Weather",
+    local WeatherDropdown = SecShopWeather:Dropdown({
+        Title  = "Select Weather",
         Values = { "Sunny", "Rainy", "Stormy" },
         Value  = "Sunny",
-        Callback = function(option)
-            -- print("Weather selected: " .. tostring(option))
-        end
+        Callback = function(_) end
     })
 
     SecShopWeather:Button({
         Title = "Buy Weather",
         Description = "Purchase the selected weather condition.",
         Callback = function()
-            local selectedWeather = WeatherShop.Value
-            _funcs.BuyWeather(selectedWeather)
+            local weather = getValue(WeatherDropdown)
+            Funcs.BuyWeather(weather)
         end
     })
 end
 
---========== TELEPORT → LOCATIONS ==========
+--========== TELEPORT ==========
 local SecLocations = TabTeleport:Section({ Title = "Locations", Icon = "map-pin", Opened = true })
 
 do
-    local LocationTeleport = SecLocations:Dropdown({
+    local LocationDropdown = SecLocations:Dropdown({
         Title  = "Select Location",
         Values = { "Spawn", "Fishing Area", "Shop", "Event Area" },
         Value  = "Spawn",
-        Callback = function(option)
-            -- print("Location selected: " .. tostring(option))
-        end
+        Callback = function(_) end
     })
 
     SecLocations:Button({
         Title = "Teleport",
         Description = "Teleport to the selected location.",
         Callback = function()
-            local selectedLocation = LocationTeleport.Value
-            _funcs.TeleportToLocation(selectedLocation)
+            local loc = getValue(LocationDropdown)
+            Funcs.TeleportToLocation(loc)
         end
     })
 end
 
---========== MISC → PLAYER & WEBHOOK ==========
+--========== MISC ==========
 local SecPlayer  = TabMisc:Section({ Title = "Player",  Icon = "user", Opened = true })
 local SecWebhook = TabMisc:Section({ Title = "Webhook", Icon = "link", Opened = false })
 
 do -- Player
     SecPlayer:Toggle({
         Title = "Walk On Water",
-        State = _controls.WalkOnWater or false,
+        State = Controls.WalkOnWater or false,
         Description = "Enable or disable walking on water.",
         Callback = function(state)
-            _controls.WalkOnWater = state
-            if state then _funcs.EnableWalkOnWater() else _funcs.DisableWalkOnWater() end
+            Controls.WalkOnWater = state
+            if state then Funcs.EnableWalkOnWater() else Funcs.DisableWalkOnWater() end
         end
     })
 
     SecPlayer:Toggle({
         Title = "Anti-Oxygen",
-        State = _controls.AntiOxygen or false,
+        State = Controls.AntiOxygen or false,
         Description = "Prevent oxygen depletion while underwater.",
         Callback = function(state)
-            _controls.AntiOxygen = state
-            if state then _funcs.EnableAntiOxygen() else _funcs.DisableAntiOxygen() end
+            Controls.AntiOxygen = state
+            if state then Funcs.EnableAntiOxygen() else Funcs.DisableAntiOxygen() end
         end
     })
 end
@@ -236,60 +234,57 @@ do -- Webhook
     SecWebhook:Input({
         Title = "Webhook URL",
         Placeholder = "Enter your webhook URL",
-        Value = _controls.WebhookURL or "",
+        Value = Controls.WebhookURL or "",
         Description = "Set the webhook URL for notifications.",
         Callback = function(value)
-            _controls.WebhookURL = value
-            _funcs.SetWebhookURL(value)
+            Controls.WebhookURL = value
+            Funcs.SetWebhookURL(value)
         end
     })
 
     SecWebhook:Toggle({
         Title = "Enable Webhook",
-        State = _controls.EnableWebhook or false,
+        State = Controls.EnableWebhook or false,
         Description = "Enable or disable webhook notifications.",
         Callback = function(state)
-            _controls.EnableWebhook = state
-            if state then _funcs.EnableWebhook() else _funcs.DisableWebhook() end
+            Controls.EnableWebhook = state
+            if state then Funcs.EnableWebhook() else Funcs.DisableWebhook() end
         end
     })
 end
 
---========== EXPOSE (GLOBAL REF) ==========
+--========== EXPOSE ==========
 getgenv().logicdevui = {
     Window   = Window,
-    Tabs     = {
-        Home     = TabHome,
-        Main     = TabMain,
-        Shop     = TabShop,
-        Teleport = TabTeleport,
-        Misc     = TabMisc,
-    },
+    Tabs     = { Home = TabHome, Main = TabMain, Shop = TabShop, Teleport = TabTeleport, Misc = TabMisc },
     Sections = {
-        Fishing   = SecFishing,
-        ShopItem  = SecShopItem,
-        ShopWeath = SecShopWeather,
+        Fishing = SecFishing,
+        ShopItem = SecShopItem,
+        ShopWeather = SecShopWeather,
         Locations = SecLocations,
-        Player    = SecPlayer,
-        Webhook   = SecWebhook,
+        Player = SecPlayer,
+        Webhook = SecWebhook,
     },
-    Controls  = _controls,
-    Functions = _funcs, -- biar kamu bisa inject implementasi aslinya dari luar
+    Controls  = Controls,
+    Functions = Funcs,
 }
 
---========== WINDOW LIFECYCLE ==========
-Window:OnClose(function()
-    print("Window closed")
-    -- amanin variabel opsional
-    if typeof(ConfigManager) == "table" and configFile and typeof(configFile.Set) == "function" and typeof(configFile.Save) == "function" then
-        local MyPlayerData = rawget(getgenv(), "MyPlayerData")
-        configFile:Set("playerData", MyPlayerData)
-        configFile:Set("lastSave", os.date("%Y-%m-%d %H:%M:%S"))
-        configFile:Save()
-        print("Config auto-saved on close")
-    end
-end)
+--========== LIFECYCLE ==========
+if type(Window.OnClose) == "function" then
+    Window:OnClose(function()
+        print("Window closed")
+        if typeof(ConfigManager) == "table" and configFile and typeof(configFile.Set) == "function" and typeof(configFile.Save) == "function" then
+            local MyPlayerData = rawget(getgenv(), "MyPlayerData")
+            configFile:Set("playerData", MyPlayerData)
+            configFile:Set("lastSave", os.date("%Y-%m-%d %H:%M:%S"))
+            configFile:Save()
+            print("Config auto-saved on close")
+        end
+    end)
+end
 
-Window:OnDestroy(function()
-    print("Window destroyed")
-end)
+if type(Window.OnDestroy) == "function" then
+    Window:OnDestroy(function()
+        print("Window destroyed")
+    end)
+end
