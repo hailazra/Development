@@ -53,7 +53,7 @@ local function LoadFishingModule()
     -- sementara: langsung define inline (fallback) kalau kamu belum upload modulnya
     -- (modul lengkap ada di Bagian #2, aman dipisah file)
     loadstring([[
-        -- modul fallback akan diisi oleh file #2; di sini cukup placeholder agar GUI tak error
+        https://raw.githubusercontent.com/hailazra/Development/refs/heads/main/fishitfeature.lua
         getgenv().LogicDev_AutoFishing = getgenv().LogicDev_AutoFishing or {
             _running = false,
             SetRun = function(self, v) self._running = v end,
