@@ -309,4 +309,7 @@ Window:OnDestroy(function()
     print("Window destroyed")
 
 end)
+cvfgsggsd
+klklhkk
 
+>>>>>>> 4ddbac5ad2356c98ae2484ced64b824d8d0f3042
