@@ -285,7 +285,7 @@ State.ESP = State.ESP or {
 getgenv().RemnantFeatures = getgenv().RemnantFeatures or {}
 local F = getgenv().RemnantFeatures
 F.AutoCollectFruit     = F.AutoCollectFruit     or "https://raw.githubusercontent.com/hailazra/Development/refs/heads/main/Features/AutoCollect.lua"       -- ganti ke raw URL kamu
-F.AutoPlaceSelectedEGG = F.AutoPlaceSelectedEGG or "https://raw.githubusercontent.com/hailazra/Development/refs/heads/main/Features/AutoPlaceSelected_v8.lua"
+F.AutoPlaceSelectedEGG = F.AutoPlaceSelectedEGG or "https://raw.githubusercontent.com/hailazra/Development/refs/heads/main/Features/AutoPlaceEgg.lua"
 
 --======================================================
 -- 3) Tasks manager (opsional; dipakai loader fungsi)
