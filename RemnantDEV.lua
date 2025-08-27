@@ -293,7 +293,7 @@ local function startAutoCollectFruit()
   G.FruitCollectCFG = buildFruitCFGFromState()
 
   local url = (G.RemnantFeatures and G.RemnantFeatures.AutoCollectFruit)
-              or "loadstring(game:HttpGet("https://raw.githubusercontent.com/hailazra/Development/refs/heads/main/Features/AutoCollect.lua"))()"
+              or "RAW_URL"
   local ok, err = pcall(function()
     loadstring(game:HttpGet(url))()
   end)
