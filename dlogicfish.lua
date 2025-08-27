@@ -6,18 +6,6 @@ local WindUI = loadstring(game:HttpGet(
     "https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"
 ))()
 
--- Theme
-WindUI:AddTheme({
-    Name = "DB",
-    Accent = "#000328",
-    Dialog = "#000328",
-    Outline = "#FFFFFF",
-    Text = "#FFFFFF",
-    Placeholder = "#999999",
-    Background = "#000e39",
-    Button = "#000328",
-    Icon = "#a1a1aa",
-})
 
 -- Window
 local Window = WindUI:CreateWindow({
@@ -26,7 +14,7 @@ local Window = WindUI:CreateWindow({
     Author        = "hailazra",
     Folder        = ".devlogichub",
     Size          = UDim2.fromOffset(250, 250),
-    Theme         = "DB",
+    Theme         = "Dark",
     Resizable     = false,
     SideBarWidth  = 120,
     HideSearchBar = true,
@@ -321,3 +309,4 @@ Window:OnDestroy(function()
     print("Window destroyed")
 
 end)
+
