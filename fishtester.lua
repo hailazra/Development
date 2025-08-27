@@ -1,12 +1,8 @@
 --========================================================
--- .devlogic / dlogicfish.lua — Auto Fishing (Single File)
+-- .devlogic / dlogicfish.lua — Auto Fishing (Custom GUI)
 --========================================================
--- GUI: WindUI (1 tab)  |  Logic: Charge -> StartMinigame -> Complete
--- Tambahan:
---  - Auto-equip rod (heuristik nama berisi "rod"/"fish")
---  - Slider Aim/Power/Delay
---  - Status counter (casts/completes) + tombol Kill
---  - Robust terhadap variasi API WindUI (fallback Section/Tab/Toggle/Set)
+-- Tanpa WindUI. Single-file: GUI + logic.
+-- GUI: ScreenGui kecil di pojok kanan atas, bisa drag.
 --========================================================
 
 --====================== Konfigurasi ======================
@@ -15,46 +11,41 @@ getgenv().AutoFishCFG = getgenv().AutoFishCFG or {
     AutoEquipRod = true,
     DebugPrint   = false,
 
-    -- Range parameter minigame
-    AimMin       = -0.25,   -- -1..1
-    AimMax       =  0.25,   -- -1..1
-    PowerMin     =  0.88,   -- 0..1
-    PowerMax     =  0.98,   -- 0..1
+    AimMin       = -0.25,
+    AimMax       =  0.25,
+    PowerMin     =  0.88,
+    PowerMax     =  0.98,
 
-    -- Jeda “manusiawi” antar cast (detik)
     CastDelayMin = 1.6,
     CastDelayMax = 2.8,
 }
 local CFG = getgenv().AutoFishCFG
+local casts, completes = 0, 0
 
 --====================== Services & Remotes ==============
 local RS          = game:GetService("ReplicatedStorage")
 local Players     = game:GetService("Players")
 local RunService  = game:GetService("RunService")
+local UserInput   = game:GetService("UserInputService")
 local LP          = Players.LocalPlayer
 
-local function req(parent, child)
-    local ok, obj = pcall(function() return parent:WaitForChild(child, 10) end)
+local function req(parent, child, t)
+    t = t or 10
+    local ok, obj = pcall(function() return parent:WaitForChild(child, t) end)
     assert(ok and obj, ("[dlogicfish] Missing node: %s"):format(child))
     return obj
 end
 
--- Path dari data kamu (Sleitnick Net)
+-- Path dari data yang kamu share (sleitnick_net@0.2.0)
 local NetRoot     = req(req(req(req(RS, "Packages"), "_Index"), "sleitnick_net@0.2.0"), "net")
 local RF_Charge   = req(NetRoot, "RF/ChargeFishingRod")
 local RF_StartMG  = req(NetRoot, "RF/RequestFishingMinigameStarted")
 local RE_Done     = req(NetRoot, "RE/FishingCompleted")
 
 --====================== Util ============================
-local casts, completes = 0, 0
-
-local function dprint(...)
-    if CFG.DebugPrint then print("[AutoFishing]", ...) end
-end
-
-local function clamp(x, a, b) if x < a then return a elseif x > b then return b else return x end end
-local function randf(a, b) return a + (b - a) * math.random() end
-
+local function dprint(...) if CFG.DebugPrint then print("[AutoFishing]", ...) end end
+local function clamp(x,a,b) if x<a then return a elseif x>b then return b else return x end end
+local function randf(a,b) return a + (b-a)*math.random() end
 local function Humanoid()
     local c = LP.Character
     return c and c:FindFirstChildOfClass("Humanoid")
@@ -66,10 +57,8 @@ local function EquipRodIfNeeded()
     local char = LP.Character
     if not hum or not char then return false end
 
-    -- Sudah pegang tool?
     if char:FindFirstChildOfClass("Tool") then return true end
 
-    -- Cari rod di Backpack (heuristik nama)
     local bp = LP:FindFirstChildOfClass("Backpack")
     if not bp then return false end
     local target
@@ -102,10 +91,9 @@ local function SafeFire(re, ...)
     return ok
 end
 
--- Jika nanti terdeteksi minigame perlu “ticks”, tambahkan di sini
+-- Kalau suatu saat minigame butuh tick RPC tambahan, isi di sini
 local function MinigameTickStub()
-    -- contoh: kirim RPC progress tiap ~0.1s kalau game update suatu saat.
-    -- sekarang belum ada remotnya, jadi dibiarkan stub.
+    -- placeholder
 end
 
 local function OneCast()
@@ -114,33 +102,25 @@ local function OneCast()
         return
     end
 
-    -- Charge (pakai timestamp-ish agar mirip perilaku asli)
-    local ts = os.clock() + math.random()
-    SafeInvoke(RF_Charge, ts)
+    SafeInvoke(RF_Charge, os.clock() + math.random())
 
-    -- Start minigame: aim & power
     local aimMin, aimMax       = math.min(CFG.AimMin, CFG.AimMax), math.max(CFG.AimMin, CFG.AimMax)
     local powerMin, powerMax   = math.min(CFG.PowerMin, CFG.PowerMax), math.max(CFG.PowerMin, CFG.PowerMax)
     local aim                  = randf(aimMin, aimMax)
     local power                = randf(powerMin, powerMax)
     SafeInvoke(RF_StartMG, aim, power)
 
-    -- Optional tick (jaga-jaga)
     MinigameTickStub()
-
-    -- Tunggu sedikit (durasi minigame)
     task.wait(randf(0.6, 1.2))
 
-    -- Complete
     SafeFire(RE_Done)
 
-    -- Stats
     casts += 1
     completes += 1
 end
 
---====================== Runner State =====================
-local AutoFishing = getgenv().LogicDev_AutoFishing or {}
+--====================== Runner ==========================
+local AutoFishing = rawget(getgenv(), "LogicDev_AutoFishing") or {}
 AutoFishing._running = AutoFishing._running or false
 AutoFishing._looping = AutoFishing._looping or false
 
@@ -156,7 +136,6 @@ end
 function AutoFishing:Start()
     if self._looping then return end
     self._looping = true
-    dprint("Loop start")
     task.spawn(function()
         while self._looping do
             if self._running then
@@ -173,171 +152,240 @@ function AutoFishing:Start()
                 RunService.Heartbeat:Wait()
             end
         end
-        dprint("Loop end")
     end)
 end
-
 getgenv().LogicDev_AutoFishing = AutoFishing
 
---====================== WindUI Loader (robust) ==========
-local WindUI
+--====================== GUI Buatan Sendiri ==============
+-- target parent GUI
+local function getGuiParent()
+    local ok, gethuiFn = pcall(function() return gethui end)
+    if ok and typeof(gethuiFn) == "function" then
+        local s, ui = pcall(gethuiFn)
+        if s and ui then return ui end
+    end
+    local CoreGui = game:GetService("CoreGui")
+    if CoreGui then return CoreGui end
+    return LP:WaitForChild("PlayerGui")
+end
+
+-- bersihkan GUI lama
+local GUI_NAME = "dlogicfish_gui"
 do
-    local ok, lib = pcall(function()
-        -- prefer dist stable
-        return loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/main/dist/main.lua"))()
-    end)
-    if not ok or type(lib) ~= "table" or type(lib.CreateWindow) ~= "function" then
-        warn("[dlogicfish] WindUI dist gagal, fallback releases/latest")
-        ok, lib = pcall(function()
-            return loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
-        end)
-        assert(ok and type(lib) == "table" and type(lib.CreateWindow) == "function",
-               "[dlogicfish] WindUI CreateWindow tidak tersedia")
-    end
-    WindUI = lib
+    local parent = getGuiParent()
+    local old = parent:FindFirstChild(GUI_NAME)
+    if old then old:Destroy() end
 end
 
---====================== GUI (1 Tab) ======================
-local Window = WindUI:CreateWindow({
-    Title         = ".devlogic",
-    Icon          = "fish",
-    Author        = "hailazra",
-    Folder        = ".devlogichub",
-    Size          = UDim2.fromOffset(250, 250),
-    Theme         = "Dark",
-    Resizable     = false,
-    SideBarWidth  = 120,
-    HideSearchBar = true,
-})
+-- buat gui
+local parent = getGuiParent()
+local sg = Instance.new("ScreenGui")
+sg.Name = GUI_NAME
+sg.ResetOnSpawn = false
+sg.IgnoreGuiInset = true
+sg.Parent = parent
 
--- beberapa versi WindUI punya Section(); kita fallback bila tidak ada
-local SecMain = (type(Window.Section) == "function")
-    and Window:Section({ Title = "Main", Icon = "gamepad", Opened = true })
-    or Window
+-- frame utama
+local frame = Instance.new("Frame")
+frame.Name = "MainFrame"
+frame.Size = UDim2.fromOffset(270, 260)
+frame.Position = UDim2.new(1, -280, 0, 80) -- kanan atas
+frame.BackgroundColor3 = Color3.fromRGB(20,20,20)
+frame.BorderSizePixel = 0
+frame.Parent = sg
 
--- tab bikin lewat Section atau Window, tergantung yang ada
-local TabFishing = (type(SecMain.Tab) == "function")
-    and SecMain:Tab({ Title = "Fishing", Icon = "fish" })
-    or (type(Window.Tab) == "function" and Window:Tab({ Title = "Fishing", Icon = "fish" }))
+local uiCorner = Instance.new("UICorner", frame)
+uiCorner.CornerRadius = UDim.new(0,10)
 
-assert(TabFishing, "[dlogicfish] Gagal membuat Tab Fishing — method :Tab() tidak ditemukan")
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, -30, 0, 28)
+title.Position = UDim2.new(0, 10, 0, 6)
+title.BackgroundTransparency = 1
+title.Font = Enum.Font.GothamBold
+title.TextSize = 14
+title.TextXAlignment = Enum.TextXAlignment.Left
+title.TextColor3 = Color3.fromRGB(240,240,240)
+title.Text = ".devlogic — Fishing"
+title.Parent = frame
 
--- Helper agar aman dengan variasi API Toggle
-local function toggle_create(scope, opts)
-    assert(type(scope.Toggle) == "function", "[dlogicfish] Method :Toggle() tidak ada")
-    return scope:Toggle(opts)
-end
-local function toggle_set(tgl, v)
-    if tgl and type(tgl.Set) == "function" then
-        tgl:Set(v)
-    elseif tgl and type(tgl.SetValue) == "function" then
-        tgl:SetValue(v)
-    end
-end
+-- drag area
+local dragBtn = Instance.new("TextButton")
+dragBtn.BackgroundTransparency = 1
+dragBtn.Size = UDim2.new(1, 0, 0, 40)
+dragBtn.Position = UDim2.new(0, 0, 0, 0)
+dragBtn.Text = ""
+dragBtn.Parent = frame
 
---=========== UI Controls ===========
--- Status kecil
-local StatusLabel = TabFishing:Label({
-    Title = ("Status: Casts %d | Completes %d"):format(casts, completes)
-})
-
--- Toggle utama
-local Tgl_Run = toggle_create(TabFishing, {
-    Title    = "Auto Fishing",
-    Desc     = "Cast \226\134\146 Minigame \226\134\146 Complete",
-    Value    = CFG.Run,     -- pakai Value (umum di WindUI)
-    Default  = CFG.Run,     -- sekaligus set Default (untuk variasi)
-    Callback = function(state)
-        CFG.Run = state
-        AutoFishing:SetRun(state)
-        if state then AutoFishing:Start() end
-    end
-})
-
--- Toggle auto-equip
-local Tgl_AutoEquip = toggle_create(TabFishing, {
-    Title    = "Auto-Equip Rod",
-    Desc     = "Cari & equip tool yang namanya mengandung 'rod'/'fish'",
-    Value    = CFG.AutoEquipRod,
-    Default  = CFG.AutoEquipRod,
-    Callback = function(state)
-        CFG.AutoEquipRod = state
-    end
-})
-
--- Toggle debug
-local Tgl_Debug = toggle_create(TabFishing, {
-    Title    = "Debug Print",
-    Value    = CFG.DebugPrint,
-    Default  = CFG.DebugPrint,
-    Callback = function(state)
-        CFG.DebugPrint = state
-    end
-})
-
--- Slider helper (jaga perbedaan API)
-local function add_slider(scope, params)
-    assert(type(scope.Slider) == "function", "[dlogicfish] Method :Slider() tidak ada")
-    return scope:Slider(params)
-end
-
--- Delay sliders
-local S_CDelayMin = add_slider(TabFishing, {
-    Title = "Cast Delay Min (s)",
-    Min = 0.5, Max = 5.0, Value = CFG.CastDelayMin, Rounding = 2,
-    Callback = function(v) CFG.CastDelayMin = clamp(v, 0.0, 10.0) end
-})
-local S_CDelayMax = add_slider(TabFishing, {
-    Title = "Cast Delay Max (s)",
-    Min = 0.6, Max = 6.0, Value = CFG.CastDelayMax, Rounding = 2,
-    Callback = function(v) CFG.CastDelayMax = clamp(v, 0.0, 10.0) end
-})
-
--- Aim/Power sliders
-local S_AimMin = add_slider(TabFishing, {
-    Title = "Aim Min",
-    Min = -1.0, Max = 1.0, Value = CFG.AimMin, Rounding = 2,
-    Callback = function(v) CFG.AimMin = clamp(v, -1.0, 1.0) end
-})
-local S_AimMax = add_slider(TabFishing, {
-    Title = "Aim Max",
-    Min = -1.0, Max = 1.0, Value = CFG.AimMax, Rounding = 2,
-    Callback = function(v) CFG.AimMax = clamp(v, -1.0, 1.0) end
-})
-local S_PowerMin = add_slider(TabFishing, {
-    Title = "Power Min",
-    Min = 0.0, Max = 1.0, Value = CFG.PowerMin, Rounding = 2,
-    Callback = function(v) CFG.PowerMin = clamp(v, 0.0, 1.0) end
-})
-local S_PowerMax = add_slider(TabFishing, {
-    Title = "Power Max",
-    Min = 0.0, Max = 1.0, Value = CFG.PowerMax, Rounding = 2,
-    Callback = function(v) CFG.PowerMax = clamp(v, 0.0, 1.0) end
-})
-
--- Tombol Kill
-local Btn_Kill = TabFishing:Button({
-    Title = "Kill / Unload",
-    Icon  = "skull",
-    Callback = function()
-        CFG.Run = false
-        AutoFishing:Kill()
-        toggle_set(Tgl_Run, false)
-        dprint("Killed")
-    end
-})
-
--- UI refresher
-task.spawn(function()
-    while task.wait(0.5) do
-        -- sync toggle utama bila berubah dari luar
-        toggle_set(Tgl_Run, CFG.Run)
-        -- update status
-        if StatusLabel and type(StatusLabel.SetTitle) == "function" then
-            StatusLabel:SetTitle(("Status: Casts %d | Completes %d"):format(casts, completes))
+do
+    local dragging, dragStart, startPos
+    dragBtn.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            dragStart = input.Position
+            startPos = frame.Position
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then dragging = false end
+            end)
         end
+    end)
+    UserInput.InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local delta = input.Position - dragStart
+            frame.Position = UDim2.new(
+                startPos.X.Scale, startPos.X.Offset + delta.X,
+                startPos.Y.Scale, startPos.Y.Offset + delta.Y
+            )
+        end
+    end)
+end
+
+-- pembatas
+local line = Instance.new("Frame")
+line.Size = UDim2.new(1, -20, 0, 1)
+line.Position = UDim2.new(0, 10, 0, 42)
+line.BackgroundColor3 = Color3.fromRGB(60,60,60)
+line.BorderSizePixel = 0
+line.Parent = frame
+
+-- helper UI
+local function mkLabel(text, x, y, w)
+    local lb = Instance.new("TextLabel")
+    lb.BackgroundTransparency = 1
+    lb.Font = Enum.Font.Gotham
+    lb.TextXAlignment = Enum.TextXAlignment.Left
+    lb.Text = text
+    lb.TextColor3 = Color3.fromRGB(220,220,220)
+    lb.TextSize = 12
+    lb.Size = UDim2.fromOffset(w or 120, 18)
+    lb.Position = UDim2.new(0, x, 0, y)
+    lb.Parent = frame
+    return lb
+end
+
+local function mkBox(placeholder, default, x, y, w)
+    local tb = Instance.new("TextBox")
+    tb.Font = Enum.Font.Gotham
+    tb.TextSize = 12
+    tb.PlaceholderText = placeholder
+    tb.Text = tostring(default)
+    tb.TextColor3 = Color3.fromRGB(240,240,240)
+    tb.BackgroundColor3 = Color3.fromRGB(35,35,35)
+    tb.BorderSizePixel = 0
+    tb.Size = UDim2.fromOffset(w or 60, 20)
+    tb.Position = UDim2.new(0, x, 0, y)
+    tb.ClearTextOnFocus = false
+    tb.Parent = frame
+    local u = Instance.new("UICorner", tb) u.CornerRadius = UDim.new(0,6)
+    return tb
+end
+
+local function mkButton(text, x, y, w, h)
+    local b = Instance.new("TextButton")
+    b.Font = Enum.Font.GothamSemibold
+    b.TextSize = 12
+    b.TextColor3 = Color3.fromRGB(240,240,240)
+    b.Text = text
+    b.AutoButtonColor = true
+    b.BackgroundColor3 = Color3.fromRGB(50,50,50)
+    b.BorderSizePixel = 0
+    b.Size = UDim2.fromOffset(w or 90, h or 24)
+    b.Position = UDim2.new(0, x, 0, y)
+    b.Parent = frame
+    local u = Instance.new("UICorner", b) u.CornerRadius = UDim.new(0,8)
+    return b
+end
+
+local function colorizeToggle(btn, on)
+    btn.Text = on and "ON" or "OFF"
+    btn.BackgroundColor3 = on and Color3.fromRGB(40,120,60) or Color3.fromRGB(90,40,40)
+end
+
+-- Toggle Run
+mkLabel("Auto Fishing", 10, 52)
+local btnRun = mkButton("", 110, 50, 50, 22)
+colorizeToggle(btnRun, CFG.Run)
+btnRun.MouseButton1Click:Connect(function()
+    CFG.Run = not CFG.Run
+    colorizeToggle(btnRun, CFG.Run)
+    AutoFishing:SetRun(CFG.Run)
+    if CFG.Run then AutoFishing:Start() end
+end)
+
+-- Toggle AutoEquip
+mkLabel("Auto-Equip Rod", 10, 80)
+local btnAE = mkButton("", 110, 78, 50, 22)
+colorizeToggle(btnAE, CFG.AutoEquipRod)
+btnAE.MouseButton1Click:Connect(function()
+    CFG.AutoEquipRod = not CFG.AutoEquipRod
+    colorizeToggle(btnAE, CFG.AutoEquipRod)
+end)
+
+-- Debug
+mkLabel("Debug Print", 170, 80)
+local btnDbg = mkButton("", 250, 78, 50, 22)
+colorizeToggle(btnDbg, CFG.DebugPrint)
+btnDbg.MouseButton1Click:Connect(function()
+    CFG.DebugPrint = not CFG.DebugPrint
+    colorizeToggle(btnDbg, CFG.DebugPrint)
+end)
+
+-- Inputs Aim / Power
+mkLabel("Aim (min/max)", 10, 112)
+local boxAimMin = mkBox("-1..1", CFG.AimMin, 110, 110, 60)
+local boxAimMax = mkBox("-1..1", CFG.AimMax, 175, 110, 60)
+
+mkLabel("Power (min/max)", 10, 138)
+local boxPowMin = mkBox("0..1", CFG.PowerMin, 110, 136, 60)
+local boxPowMax = mkBox("0..1", CFG.PowerMax, 175, 136, 60)
+
+-- Inputs Delay
+mkLabel("Delay (min/max s)", 10, 164)
+local boxDelMin = mkBox("sec", CFG.CastDelayMin, 110, 162, 60)
+local boxDelMax = mkBox("sec", CFG.CastDelayMax, 175, 162, 60)
+
+-- Apply
+local btnApply = mkButton("Apply", 240, 134, 20, 50)
+btnApply.MouseButton1Click:Connect(function()
+    local function tonum(tb, def) local v = tonumber(tb.Text) return v or def end
+    local aMin, aMax = tonum(boxAimMin, CFG.AimMin), tonum(boxAimMax, CFG.AimMax)
+    CFG.AimMin = clamp(aMin, -1, 1)
+    CFG.AimMax = clamp(aMax, -1, 1)
+
+    local pMin, pMax = tonum(boxPowMin, CFG.PowerMin), tonum(boxPowMax, CFG.PowerMax)
+    CFG.PowerMin = clamp(pMin, 0, 1)
+    CFG.PowerMax = clamp(pMax, 0, 1)
+
+    local dMin, dMax = tonum(boxDelMin, CFG.CastDelayMin), tonum(boxDelMax, CFG.CastDelayMax)
+    CFG.CastDelayMin = clamp(dMin, 0, 10)
+    CFG.CastDelayMax = clamp(dMax, 0, 10)
+end)
+
+-- Status
+local status = mkLabel("Status: Casts 0 | Completes 0", 10, 194, 240)
+
+-- Kill
+local btnKill = mkButton("Kill / Close", 10, 218, 250, 28)
+btnKill.BackgroundColor3 = Color3.fromRGB(120,50,50)
+btnKill.MouseButton1Click:Connect(function()
+    CFG.Run = false
+    AutoFishing:Kill()
+    sg:Destroy()
+end)
+
+-- refresher status
+task.spawn(function()
+    while sg.Parent do
+        status.Text = ("Status: Casts %d | Completes %d"):format(casts, completes)
+        task.wait(0.5)
     end
 end)
 
-print("[.devlogic] dlogicfish.lua loaded")
+-- auto-start jika CFG.Run true (sinkron)
+if CFG.Run then
+    AutoFishing:SetRun(true)
+    AutoFishing:Start()
+    colorizeToggle(btnRun, true)
+end
+print("[.devlogic] dlogicfish (custom GUI) loaded")
+
 
