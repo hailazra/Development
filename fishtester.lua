@@ -6,11 +6,11 @@ local WindUI = loadstring(game:HttpGet(
 --========== WINDOW ==========
 local Window = WindUI:CreateWindow({
     Title         = ".devlogic",
-    Icon          = "rbxassetid://90524549712661",
+    Icon          = "rbxassetid://73063950477508",
     Author        = "Fish It",
     Folder        = ".devlogichub",
     Size          = UDim2.fromOffset(250, 250),
-    Theme         = "Light",
+    Theme         = "Amber",
     Resizable     = false,
     SideBarWidth  = 120,
     HideSearchBar = true,
