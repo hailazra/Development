@@ -3,18 +3,18 @@ local WindUI = loadstring(game:HttpGet(
     "https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"
 ))()
 
--- Custom Theme: DarkPurple
-WindUI.Themes["DarkOpal"] = {
-    Accent = "#000000ff",      -- deep purple for highlights
-    Outline = "#000000ff",     -- soft lavender outline
-    Text = "#ffffffff",        -- light lavender text
-    Placeholder = "#535353ff", -- muted purple for placeholders
-    Background = "#000000ff",  -- near-black purple background
-    Button = "#000000ff",      -- vibrant purple button
-    Icon = "#ffffffff",        -- lighter purple for icons
+-- Custom Theme: Midnight
+WindUI.Themes["Midnight"] = {
+    Accent = "#1e3a8a",
+    Outline = "#93c5fd",
+    Text = "#bfdbfe",
+    Placeholder = "#60a5fa",
+    Background = "#0f172a",
+    Button = "#2563eb",
+    Icon = "#3b82f6",
 }
 
-Theme = "DarkOpal"
+Theme = "Midnight""
 
 
 --========== WINDOW ==========
@@ -24,7 +24,7 @@ local Window = WindUI:CreateWindow({
     Author        = "Fish It",
     Folder        = ".devlogichub",
     Size          = UDim2.fromOffset(250, 250),
-    Theme         = "DarkOpal",
+    Theme         = "Midnight",
     Resizable     = false,
     SideBarWidth  = 120,
     HideSearchBar = true,
