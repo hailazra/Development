@@ -3,20 +3,6 @@ local WindUI = loadstring(game:HttpGet(
     "https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"
 ))()
 
--- Custom Theme: Midnight
-WindUI.Themes["Midnight"] = {
-    Accent = "#1e3a8a",
-    Outline = "#93c5fd",
-    Text = "#bfdbfe",
-    Placeholder = "#60a5fa",
-    Background = "#0f172a",
-    Button = "#2563eb",
-    Icon = "#3b82f6",
-}
-
-Theme = "Midnight""
-
-
 --========== WINDOW ==========
 local Window = WindUI:CreateWindow({
     Title         = ".devlogic",
@@ -24,7 +10,7 @@ local Window = WindUI:CreateWindow({
     Author        = "Fish It",
     Folder        = ".devlogichub",
     Size          = UDim2.fromOffset(250, 250),
-    Theme         = "Midnight",
+    Theme         = "Dark",
     Resizable     = false,
     SideBarWidth  = 120,
     HideSearchBar = true,
