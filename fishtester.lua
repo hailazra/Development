@@ -17,35 +17,43 @@ local Window = WindUI:CreateWindow({
 })
 
 
--- ====== 1) Matikan OpenButton bawaan WindUI biar gak dobel ======
+-- =========================================================
+--  .devlogic — Custom Minimize Button (Logo Only When Minimized)
+--  Drop-in setelah kamu bikin `Window = WindUI:CreateWindow({...})`
+-- =========================================================
+
+-- 0) Konfigurasi
+local LOGO_ASSET_ID = 73063950477508   -- <-- GANTI ke Image ID logo kamu (angka saja)
+local BUTTON_SIZE   = 56           -- px (50–64 ramah mobile)
+local BUTTON_PAD    = 6            -- px padding di dalam tombol
+local START_POS     = UDim2.fromOffset(20, 200) -- posisi awal icon
+
+-- 1) Matikan OpenButton bawaan WindUI (biar gak dobel)
 pcall(function()
     Window:EditOpenButton({ Enabled = false })
 end)
 
--- ====== 2) Buat tombol logo mengambang (minimize/restore) ======
-local CoreGui = game:GetService("CoreGui")
+-- 2) Buat tombol logo mengambang
+local CoreGui      = game:GetService("CoreGui")
 local TweenService = game:GetService("TweenService")
-local LOGO_ASSET_ID = 73063950477508 -- <-- GANTI ke Image ID logo kamu (rbxassetid://ID)
 
--- container
 local MiniGui = Instance.new("ScreenGui")
 MiniGui.Name = "DevlogicMini"
 MiniGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 MiniGui.ResetOnSpawn = false
 MiniGui.Parent = CoreGui
 
--- tombol
 local MiniBtn = Instance.new("ImageButton")
 MiniBtn.Name = "MiniButton"
 MiniBtn.BackgroundTransparency = 1
 MiniBtn.AutoButtonColor = true
-MiniBtn.Size = UDim2.fromOffset(56, 56)          -- ukuran icon (mobile-friendly 50–64)
-MiniBtn.Position = UDim2.fromOffset(20, 200)     -- posisi awal (ubah sesuka hati)
-MiniBtn.Draggable = true                          -- drag & drop sederhana
+MiniBtn.Size = UDim2.fromOffset(BUTTON_SIZE, BUTTON_SIZE)
+MiniBtn.Position = START_POS
+MiniBtn.Draggable = true
 MiniBtn.Image = ("rbxassetid://%d"):format(LOGO_ASSET_ID)
+MiniBtn.Visible = false -- default: tersembunyi saat window terbuka
 MiniBtn.Parent = MiniGui
 
--- sudut bulat & ring tipis biar keliatan tombol
 local corner = Instance.new("UICorner")
 corner.CornerRadius = UDim.new(1, 0)
 corner.Parent = MiniBtn
@@ -55,56 +63,101 @@ stroke.Thickness = 1
 stroke.Transparency = 0.25
 stroke.Parent = MiniBtn
 
--- jaga aspek (biar gak gepeng saat di-resize)
 local aspect = Instance.new("UIAspectRatioConstraint")
 aspect.AspectRatio = 1
 aspect.DominantAxis = Enum.DominantAxis.Width
 aspect.Parent = MiniBtn
 
--- padding kecil biar gambar gak nempel pinggir
 local pad = Instance.new("UIPadding")
-pad.PaddingTop = UDim.new(0, 6)
-pad.PaddingBottom = UDim.new(0, 6)
-pad.PaddingLeft = UDim.new(0, 6)
-pad.PaddingRight = UDim.new(0, 6)
+pad.PaddingTop    = UDim.new(0, BUTTON_PAD)
+pad.PaddingBottom = UDim.new(0, BUTTON_PAD)
+pad.PaddingLeft   = UDim.new(0, BUTTON_PAD)
+pad.PaddingRight  = UDim.new(0, BUTTON_PAD)
 pad.Parent = MiniBtn
 
--- ====== 3) Toggle langsung lewat API WindUI ======
-local minimized = false  -- start: window visible
+-- 3) Toggle helper (API WindUI + fallback)
+local minimized = false -- start: window visible, logo hidden
 
--- helper anim
-local function bump(btn)
-    local t = TweenInfo.new(0.08, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-    TweenService:Create(btn, t, { Size = UDim2.fromOffset(60, 60) }):Play()
-    task.delay(0.08, function()
-        TweenService:Create(btn, t, { Size = UDim2.fromOffset(56, 56) }):Play()
-    end)
-end
-
--- fungsi show/hide window
-local function SetWindowVisible(visible: boolean)
-    minimized = not visible
-    -- WindUI expose SetVisible / Toggle pada window; kalau tidak ada, fallback ke Enabled
+local function SafeSetVisible(visible: boolean)
+    -- Coba API resmi WindUI
     local ok = pcall(function() Window:SetVisible(visible) end)
     if not ok then
-        -- fallback: cari ScreenGui utama WindUI (heuristik aman)
-        local gui = MiniGui.Parent:FindFirstChildWhichIsA("ScreenGui")
-        if gui then gui.Enabled = visible end
+        -- Fallback: enable/disable ScreenGui teratas yang kira-kira milik WindUI
+        -- (aman karena OpenButton bawaan sudah kita nonaktifkan)
+        local topGui
+        for _, gui in ipairs(CoreGui:GetChildren()) do
+            if gui:IsA("ScreenGui") and gui ~= MiniGui then
+                -- heuristik: ambil yang punya frame besar
+                local size = Vector2.new()
+                pcall(function() size = gui.AbsoluteSize end)
+                if size.X >= 200 and size.Y >= 150 then
+                    topGui = gui
+                    break
+                end
+            end
+        end
+        if topGui then topGui.Enabled = visible end
     end
+end
+
+local function SetWindowVisible(visible: boolean)
+    minimized = not visible
+    SafeSetVisible(visible)
+    MiniBtn.Visible = minimized
+end
+
+-- 4) Animasi kecil pada click
+local function bump(btn)
+    local t = TweenInfo.new(0.08, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+    TweenService:Create(btn, t, { Size = UDim2.fromOffset(BUTTON_SIZE + 4, BUTTON_SIZE + 4) }):Play()
+    task.delay(0.08, function()
+        TweenService:Create(btn, t, { Size = UDim2.fromOffset(BUTTON_SIZE, BUTTON_SIZE) }):Play()
+    end)
 end
 
 MiniBtn.MouseButton1Click:Connect(function()
     bump(MiniBtn)
-    SetWindowVisible(minimized)  -- kebalikan: kalau lagi minimized, buka; kalau buka, minimize
+    SetWindowVisible(minimized) -- kalau minimized → buka, kalau buka → minimize
 end)
 
--- ====== 5) (Opsional) simpan posisi tombol antar re-execute ======
--- pakai getgenv untuk simple persistence di sesi eksekusi
+-- 5) Public API kecil (kalau kamu mau panggil dari tempat lain)
+getgenv().Devlogic = getgenv().Devlogic or {}
+function getgenv().Devlogic.Minimize() SetWindowVisible(false) end
+function getgenv().Devlogic.Restore()  SetWindowVisible(true)  end
+function getgenv().Devlogic.Toggle()   SetWindowVisible(minimized) end
+
+-- 6) Simpan posisi tombol antar re-exec (opsional)
 getgenv().DevlogicMiniPos = getgenv().DevlogicMiniPos or MiniBtn.Position
 MiniBtn.Position = getgenv().DevlogicMiniPos
 MiniBtn:GetPropertyChangedSignal("Position"):Connect(function()
     getgenv().DevlogicMiniPos = MiniBtn.Position
 end)
+
+-- 7) (Opsional) Edge-snap sederhana saat lepas drag (biar rapi di tepi layar)
+local function edgeSnap()
+    local vp = workspace.CurrentCamera and workspace.CurrentCamera.ViewportSize or Vector2.new(1920, 1080)
+    local abs = MiniBtn.AbsolutePosition
+    local size = MiniBtn.AbsoluteSize
+    local leftDist  = abs.X
+    local rightDist = vp.X - (abs.X + size.X)
+    local targetX
+    if leftDist <= rightDist then
+        targetX = 10
+    else
+        targetX = vp.X - size.X - 10
+    end
+    local targetY = math.clamp(abs.Y, 10, vp.Y - size.Y - 10)
+    MiniBtn:TweenPosition(UDim2.fromOffset(targetX, targetY), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.12, true)
+end
+
+MiniBtn.MouseLeave:Connect(function()
+    -- kalau habis drag biasanya mouse leave, coba snap
+    task.delay(0.02, edgeSnap)
+end)
+
+-- 8) Inisialisasi: pastikan window tampil dulu (logo hidden)
+SetWindowVisible(true)
+
 
 
 -- === Topbar Changelog (simple) ===
