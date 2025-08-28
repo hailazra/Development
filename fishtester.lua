@@ -7,7 +7,7 @@ local WindUI = loadstring(game:HttpGet(
 local Window = WindUI:CreateWindow({
     Title         = ".devlogic",
     Icon          = "brain-circuit",
-    Author        = "hailazra",
+    Author        = "Fish It",
     Folder        = ".devlogichub",
     Size          = UDim2.fromOffset(250, 250),
     Theme         = "Dark",
@@ -16,28 +16,41 @@ local Window = WindUI:CreateWindow({
     HideSearchBar = true,
 })
 
+
+Window:EditOpenButton({
+    Title = "",
+    Icon = "rbxassetid://90524549712661",
+    CornerRadius = UDim.new(0,16),
+    StrokeThickness = 2,
+    Color = ColorSequence.new( -- gradient
+        Color3.fromHex("FF0F7B"), 
+        Color3.fromHex("F89B29")
+    ),
+    OnlyMobile = false,
+    Enabled = true,
+    Draggable = true,
+})
+
 -- === Topbar Changelog (simple) ===
 local CHANGELOG = table.concat({
-    "• v0.1.2 — 2025-08-27",
-    "  - Add Topbar Changelog button",
-    "",
-    "• v0.1.1 — 2025-08-26",
-    "  - Fix Weather section",
-    "  - Stabilize Dropdown getters",
+    "[+] Optimization GUI",
 }, "\n")
-
+local DISCORD = table.concat({
+    "https://discord.gg/3AzvRJFT3M",
+}, "\n")
+    
 local function ShowChangelog()
     Window:Dialog({
         Title   = "Changelog",
         Content = CHANGELOG,
         Buttons = {
             {
-                Title   = "Copy",
+                Title   = "Discord",
                 Icon    = "copy",
                 Variant = "Secondary",
                 Callback = function()
                     if typeof(setclipboard) == "function" then
-                        setclipboard(CHANGELOG)
+                        setclipboard(DISCORD)
                         WindUI:Notify({ Title = "Copied", Content = "Changelog copied", Icon = "check", Duration = 2 })
                     else
                         WindUI:Notify({ Title = "Info", Content = "Clipboard not available", Icon = "info", Duration = 3 })
