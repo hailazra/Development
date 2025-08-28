@@ -3,6 +3,10 @@ local WindUI = loadstring(game:HttpGet(
     "https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"
 ))()
 
+-- Predeclare Tabs/Sections agar bisa dipakai di loader (upvalues terisi setelah dibuat)
+local TabHome, TabMain, TabShop, TabTeleport, TabMisc
+local SecFishing, SecShopItem, SecShopWeather, SecLocations, SecPlayer, SecWebhook
+
 --========== WINDOW ==========
 local Window = WindUI:CreateWindow({
     Title         = ".devlogic",
@@ -36,8 +40,12 @@ local function ShowChangelog()
                 Icon    = "copy",
                 Variant = "Secondary",
                 Callback = function()
-                    setclipboard(CHANGELOG)
-                    WindUI:Notify({ Title = "Copied", Content = "Changelog copied", Icon = "check", Duration = 2 })
+                    if typeof(setclipboard) == "function" then
+                        setclipboard(CHANGELOG)
+                        WindUI:Notify({ Title = "Copied", Content = "Changelog copied", Icon = "check", Duration = 2 })
+                    else
+                        WindUI:Notify({ Title = "Info", Content = "Clipboard not available", Icon = "info", Duration = 3 })
+                    end
                 end
             },
             { Title = "Close", Variant = "Primary" }
@@ -86,21 +94,164 @@ local function getValue(ctrl)
     return rawget(ctrl, "Value")
 end
 
+--========== FEATURE LOADER ==========
+local function notifyOk(msg)
+    WindUI:Notify({ Title = "Success", Content = tostring(msg), Icon = "check", Duration = 3 })
+end
+
+local function notifyErr(msg)
+    WindUI:Notify({ Title = "Error", Content = tostring(msg), Icon = "x", Duration = 5 })
+end
+
+local featureDestruct -- opsional: simpan destructor dari fitur
+
+local allowedNames = {
+    SetDelayCast       = true,
+    StartAutoCast      = true,
+    StopAutoCast       = true,
+    StartAutoReel      = true,
+    StopAutoReel       = true,
+    StartAutoFishing   = true,
+    StopAutoFishing    = true,
+    BuyRod             = true,
+    BuyItem            = true,
+    BuyWeather         = true,
+    TeleportToLocation = true,
+    EnableWalkOnWater  = true,
+    DisableWalkOnWater = true,
+    EnableAntiOxygen   = true,
+    DisableAntiOxygen  = true,
+    SetWebhookURL      = true,
+    EnableWebhook      = true,
+    DisableWebhook     = true,
+}
+
+local function mergeFuncs(exported)
+    for k, fn in pairs(exported) do
+        if allowedNames[k] and type(fn) == "function" then
+            Funcs[k] = fn
+        end
+    end
+end
+
+local function loadFeatureFromUrl(url)
+    if type(url) ~= "string" or url == "" then
+        notifyErr("URL kosong atau tidak valid")
+        return false
+    end
+
+    local okFetch, code = pcall(function()
+        return game:HttpGet(url)
+    end)
+    if not okFetch or type(code) ~= "string" or code == "" then
+        notifyErr("Fetch gagal: " .. tostring(code))
+        return false
+    end
+
+    local chunk, compileErr = loadstring(code)
+    if not chunk then
+        notifyErr("Compile error: " .. tostring(compileErr))
+        return false
+    end
+
+    -- Environment untuk modul fitur (terisi referensi aktual Tabs/Sections)
+    local env = setmetatable({
+        Window = Window,
+        Tabs = { Home = TabHome, Main = TabMain, Shop = TabShop, Teleport = TabTeleport, Misc = TabMisc },
+        Sections = {
+            Fishing = SecFishing, ShopItem = SecShopItem, ShopWeather = SecShopWeather,
+            Locations = SecLocations, Player = SecPlayer, Webhook = SecWebhook,
+        },
+        Controls = Controls,
+        Funcs = Funcs,
+        Notify = WindUI and WindUI.Notify and function(t) WindUI:Notify(t) end or function() end,
+        print = print, warn = warn,
+    }, { __index = getfenv() })
+    setfenv(chunk, env)
+
+    local okRun, exported = pcall(chunk)
+    if not okRun then
+        notifyErr("Runtime error: " .. tostring(exported))
+        return false
+    end
+
+    if type(exported) == "table" then
+        if type(exported.destroy) == "function" then
+            featureDestruct = exported.destroy
+        end
+        if type(exported.init) == "function" then
+            task.spawn(function()
+                local okInit, err = pcall(exported.init)
+                if not okInit then warn("[Feature.init] error:", err) end
+            end)
+        end
+        mergeFuncs(exported)
+        notifyOk("Feature loaded")
+        return true
+    else
+        -- Jika modul menulis langsung ke Funcs, anggap sukses
+        notifyOk("Feature loaded (registered)")
+        return true
+    end
+end
+
 --========== TABS ==========
-local TabHome     = Window:Tab({ Title = "Home",     Icon = "house" })
-local TabMain     = Window:Tab({ Title = "Main",     Icon = "gamepad" })
-local TabShop     = Window:Tab({ Title = "Shop",     Icon = "shopping-cart" })
-local TabTeleport = Window:Tab({ Title = "Teleport", Icon = "map" })
-local TabMisc     = Window:Tab({ Title = "Misc",     Icon = "cog" })
+TabHome     = Window:Tab({ Title = "Home",     Icon = "house" })
+TabMain     = Window:Tab({ Title = "Main",     Icon = "gamepad" })
+TabShop     = Window:Tab({ Title = "Shop",     Icon = "shopping-cart" })
+TabTeleport = Window:Tab({ Title = "Teleport", Icon = "map" })
+TabMisc     = Window:Tab({ Title = "Misc",     Icon = "cog" })
 
 --========== HOME ==========
 do
     TabHome:Section({ Title = ".devlogic", TextXAlignment = "Left", TextSize = 17 })
-    -- tambahin changelog/discord nanti di sini
+
+    -- Feature Loader UI
+    local SecFeature = TabHome:Section({ Title = "Feature Loader", Icon = "plug", Opened = true })
+
+    SecFeature:Input({
+        Title = "Feature URL",
+        Placeholder = "https://example.com/feature.lua",
+        Value = Controls.FeatureURL or "",
+        Callback = function(v)
+            Controls.FeatureURL = v
+        end
+    })
+
+    SecFeature:Button({
+        Title = "Load Feature",
+        Icon = "download",
+        Description = "Load remote feature script via loadstring",
+        Callback = function()
+            local url = Controls.FeatureURL
+            task.spawn(function()
+                loadFeatureFromUrl(url)
+            end)
+        end
+    })
+
+    SecFeature:Button({
+        Title = "Unload Feature",
+        Icon = "trash-2",
+        Variant = "Secondary",
+        Description = "Unload the currently loaded feature (if any).",
+        Callback = function()
+            if type(featureDestruct) == "function" then
+                local ok, err = pcall(featureDestruct)
+                if not ok then warn("[Feature.destroy] error:", err) end
+                featureDestruct = nil
+                WindUI:Notify({ Title = "Unloaded", Content = "Feature unloaded", Icon = "trash", Duration = 3 })
+            else
+                WindUI:Notify({ Title = "Info", Content = "Tidak ada feature aktif", Icon = "info", Duration = 3 })
+            end
+            -- Opsional: reset kembali ke no-op jika ingin betul2 bersih
+            -- for k in pairs(allowedNames) do Funcs[k] = function() end end
+        end
+    })
 end
 
 --========== MAIN → FISHING ==========
-local SecFishing = TabMain:Section({ Title = "Fishing", Icon = "fish", Opened = true })
+SecFishing = TabMain:Section({ Title = "Fishing", Icon = "fish", Opened = true })
 
 do
     SecFishing:Input({
@@ -149,8 +300,8 @@ end
 
 --========== SHOP → ITEM & WEATHER ==========
 -- Catatan: ganti icon "cloud-sun" → "cloud" (lebih aman di Lucide)
-local SecShopItem    = TabShop:Section({ Title = "Item",    Icon = "wrench", Opened = true })
-local SecShopWeather = TabShop:Section({ Title = "Weather", Icon = "cloud",  Opened = false })
+SecShopItem    = TabShop:Section({ Title = "Item",    Icon = "wrench", Opened = true })
+SecShopWeather = TabShop:Section({ Title = "Weather", Icon = "cloud",  Opened = true })
 
 do -- Item
     local RodDropdown = SecShopItem:Dropdown({
@@ -173,11 +324,11 @@ do -- Item
         Title  = "Select Item",
         Values = { "Bait", "Lure", "Fish Finder" },
         Value  = "Bait",
-        Multi  =  true, 
+        Multi  =  true,
         Callback = function(_) end
     })
 
-    local QtyBox = SecShopItem:Input({
+    SecShopItem:Input({
         Title = "Item Quantity",
         Placeholder = "Enter quantity",
         Value = tostring(Controls.BuyItemQuantity or 1),
@@ -217,7 +368,7 @@ do -- Weather
 end
 
 --========== TELEPORT ==========
-local SecLocations = TabTeleport:Section({ Title = "Locations", Icon = "map-pin", Opened = true })
+SecLocations = TabTeleport:Section({ Title = "Locations", Icon = "map-pin", Opened = true })
 
 do
     local LocationDropdown = SecLocations:Dropdown({
@@ -238,8 +389,8 @@ do
 end
 
 --========== MISC ==========
-local SecPlayer  = TabMisc:Section({ Title = "Player",  Icon = "user", Opened = true })
-local SecWebhook = TabMisc:Section({ Title = "Webhook", Icon = "link", Opened = false })
+SecPlayer  = TabMisc:Section({ Title = "Player",  Icon = "user", Opened = true })
+SecWebhook = TabMisc:Section({ Title = "Webhook", Icon = "link", Opened = false })
 
 do -- Player
     SecPlayer:Toggle({
@@ -303,9 +454,11 @@ getgenv().logicdevui = {
 }
 
 --========== LIFECYCLE ==========
+-- Tidak melakukan cleanup di OnClose (agar minimize → icon tidak memicu unload)
 if type(Window.OnClose) == "function" then
     Window:OnClose(function()
         print("Window closed")
+        -- Simpan konfigurasi (opsional); tidak unload feature di sini
         if typeof(ConfigManager) == "table" and configFile and typeof(configFile.Set) == "function" and typeof(configFile.Save) == "function" then
             local MyPlayerData = rawget(getgenv(), "MyPlayerData")
             configFile:Set("playerData", MyPlayerData)
@@ -316,8 +469,14 @@ if type(Window.OnClose) == "function" then
     end)
 end
 
+-- Cleanup hanya saat benar-benar destroy
 if type(Window.OnDestroy) == "function" then
     Window:OnDestroy(function()
         print("Window destroyed")
+        if type(featureDestruct) == "function" then
+            local ok, err = pcall(featureDestruct)
+            if not ok then warn("[Feature.destroy@OnDestroy] error:", err) end
+            featureDestruct = nil
+        end
     end)
 end
