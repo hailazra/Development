@@ -17,19 +17,113 @@ local Window = WindUI:CreateWindow({
 })
 
 
-Window:EditOpenButton({
-    Title = ".devlogic",
-    Icon = "brain-circuit",
-    CornerRadius = UDim.new(0,0),
-    StrokeThickness = 2,
-    Color = ColorSequence.new( -- gradient
-        Color3.fromHex("FF0F7B"), 
-        Color3.fromHex("F89B29")
-    ),
-    OnlyMobile = false,
-    Enabled = true,
-    Draggable = true,
-})
+-- ====== 1) Matikan OpenButton bawaan WindUI biar gak dobel ======
+pcall(function()
+    Window:EditOpenButton({ Enabled = false })
+end)
+
+-- ====== 2) Buat tombol logo mengambang (minimize/restore) ======
+local CoreGui = game:GetService("CoreGui")
+local TweenService = game:GetService("TweenService")
+local LOGO_ASSET_ID = 73063950477508 -- <-- GANTI ke Image ID logo kamu (rbxassetid://ID)
+
+-- container
+local MiniGui = Instance.new("ScreenGui")
+MiniGui.Name = "DevlogicMini"
+MiniGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+MiniGui.ResetOnSpawn = false
+MiniGui.Parent = CoreGui
+
+-- tombol
+local MiniBtn = Instance.new("ImageButton")
+MiniBtn.Name = "MiniButton"
+MiniBtn.BackgroundTransparency = 1
+MiniBtn.AutoButtonColor = true
+MiniBtn.Size = UDim2.fromOffset(56, 56)          -- ukuran icon (mobile-friendly 50–64)
+MiniBtn.Position = UDim2.fromOffset(20, 200)     -- posisi awal (ubah sesuka hati)
+MiniBtn.Draggable = true                          -- drag & drop sederhana
+MiniBtn.Image = ("rbxassetid://%d"):format(LOGO_ASSET_ID)
+MiniBtn.Parent = MiniGui
+
+-- sudut bulat & ring tipis biar keliatan tombol
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(1, 0)
+corner.Parent = MiniBtn
+
+local stroke = Instance.new("UIStroke")
+stroke.Thickness = 1
+stroke.Transparency = 0.25
+stroke.Parent = MiniBtn
+
+-- jaga aspek (biar gak gepeng saat di-resize)
+local aspect = Instance.new("UIAspectRatioConstraint")
+aspect.AspectRatio = 1
+aspect.DominantAxis = Enum.DominantAxis.Width
+aspect.Parent = MiniBtn
+
+-- padding kecil biar gambar gak nempel pinggir
+local pad = Instance.new("UIPadding")
+pad.PaddingTop = UDim.new(0, 6)
+pad.PaddingBottom = UDim.new(0, 6)
+pad.PaddingLeft = UDim.new(0, 6)
+pad.PaddingRight = UDim.new(0, 6)
+pad.Parent = MiniBtn
+
+-- ====== 3) Toggle langsung lewat API WindUI ======
+local minimized = false  -- start: window visible
+
+-- helper anim
+local function bump(btn)
+    local t = TweenInfo.new(0.08, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+    TweenService:Create(btn, t, { Size = UDim2.fromOffset(60, 60) }):Play()
+    task.delay(0.08, function()
+        TweenService:Create(btn, t, { Size = UDim2.fromOffset(56, 56) }):Play()
+    end)
+end
+
+-- fungsi show/hide window
+local function SetWindowVisible(visible: boolean)
+    minimized = not visible
+    -- WindUI expose SetVisible / Toggle pada window; kalau tidak ada, fallback ke Enabled
+    local ok = pcall(function() Window:SetVisible(visible) end)
+    if not ok then
+        -- fallback: cari ScreenGui utama WindUI (heuristik aman)
+        local gui = MiniGui.Parent:FindFirstChildWhichIsA("ScreenGui")
+        if gui then gui.Enabled = visible end
+    end
+end
+
+MiniBtn.MouseButton1Click:Connect(function()
+    bump(MiniBtn)
+    SetWindowVisible(minimized)  -- kebalikan: kalau lagi minimized, buka; kalau buka, minimize
+end)
+
+-- ====== 4) (Opsional) auto-hide logo saat window terbuka penuh ======
+-- kalau kamu mau logo hanya muncul saat di-minimize, aktifkan block ini
+do
+    local function syncLogo()
+        MiniBtn.Visible = minimized
+    end
+    -- coba hook event bawaan WindUI jika ada
+    local ok, ev = pcall(function() return Window.VisibilityChanged end)
+    if ok and typeof(ev) == "RBXScriptSignal" then
+        ev:Connect(function(isVisible)
+            minimized = not isVisible
+            syncLogo()
+        end)
+    end
+    -- inisialisasi
+    syncLogo()
+end
+
+-- ====== 5) (Opsional) simpan posisi tombol antar re-execute ======
+-- pakai getgenv untuk simple persistence di sesi eksekusi
+getgenv().DevlogicMiniPos = getgenv().DevlogicMiniPos or MiniBtn.Position
+MiniBtn.Position = getgenv().DevlogicMiniPos
+MiniBtn:GetPropertyChangedSignal("Position"):Connect(function()
+    getgenv().DevlogicMiniPos = MiniBtn.Position
+end)
+
 
 -- === Topbar Changelog (simple) ===
 local CHANGELOG = table.concat({
