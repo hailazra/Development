@@ -229,7 +229,7 @@ do -- Webhook
             print("[GUI] Webhook URL set")
         end
     })
-    local DDWebhook = SecWebhook:Dropdown({
+    local WebhookDropdown = SecWebhook:Dropdown({
         Title  = "Select Fish",
         Values = { "Fish Caught", "Level Up", "Rare Fish" },
         Value  = "Fish Caught",
