@@ -97,7 +97,6 @@ end
 --========== TABS ==========
 local TabHome     = Window:Tab({ Title = "Home",     Icon = "house" })
 local TabMain     = Window:Tab({ Title = "Main",     Icon = "gamepad" })
-local TabShop     = Window:Tab({ Title = "Shop",     Icon = "shopping-cart" })
 local TabTeleport = Window:Tab({ Title = "Teleport", Icon = "map" })
 local TabMisc     = Window:Tab({ Title = "Misc",     Icon = "cog" })
 
@@ -152,75 +151,6 @@ do
     })
 end
 
---========== SHOP → ITEM & WEATHER ==========
-local SecShopItem    = TabShop:Section({ Title = "Item",    Icon = "wrench", Opened = true })
-local SecShopWeather = TabShop:Section({ Title = "Weather", Icon = "cloud",  Opened = true })
-
-do -- Item
-    local RodDropdown = SecShopItem:Dropdown({
-        Title  = "Select Rod",
-        Values = { "Ares", "Astral", "Luck" },
-        Value  = "Ares",
-        Callback = function(_) end
-    })
-
-    SecShopItem:Button({
-        Title = "Buy Rod",
-        Description = "Purchase the selected fishing rod.",
-        Callback = function()
-            local selected = getValue(RodDropdown)
-            print("[GUI] Buy Rod:", toListText(selected))
-        end
-    })
-
-    local ItemDropdown = SecShopItem:Dropdown({
-        Title  = "Select Item",
-        Values = { "Bait", "Lure", "Fish Finder" },
-        Value  = "Bait",
-        Multi  =  true,
-        Callback = function(_) end
-    })
-
-    local qty = 1
-    SecShopItem:Input({
-         Title = "Input",
-    Desc = "Input Description",
-    Value = "Default value",
-    InputIcon = "bird",
-    Type = "Input", -- or "Textarea"
-    Placeholder = "Enter text...",
-    Callback = function(input) 
-        print("text entered: " .. input)
-    end
-})
-
-    SecShopItem:Button({
-        Title = "Buy Item",
-        Description = "Purchase the selected item in the specified quantity.",
-        Callback = function()
-            local item = getValue(ItemDropdown)
-            print(string.format("[GUI] Buy Item: %s x%d", toListText(item), qty))
-        end
-    })
-end
-
-do -- Weather
-    local WeatherDropdown = SecShopWeather:Dropdown({
-        Title  = "Select Weather",
-        Values = { "Sunny", "Rainy", "Stormy" },
-        Value  = "Sunny",
-        Callback = function(_) end
-    })
-
-    SecShopWeather:Button({
-        Title = "Buy Weather",
-        Description = "Purchase the selected weather condition.",
-        Callback = function()
-            local weather = getValue(WeatherDropdown)
-            print("[GUI] Buy Weather:", toListText(weather))
-        end
-    })
-end
 
 --========== TELEPORT ==========
 local SecLocations = TabTeleport:Section({ Title = "Locations", Icon = "map-pin", Opened = true })
@@ -305,5 +235,3 @@ if type(Window.OnDestroy) == "function" then
         -- Tidak ada cleanup integrasi fitur di sini
     end)
 end
-
-
