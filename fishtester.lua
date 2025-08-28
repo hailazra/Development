@@ -19,7 +19,7 @@ local Window = WindUI:CreateWindow({
 
 Window:EditOpenButton({
     Title = "",
-    Icon = "rbxassetid://90524549712661",
+    Icon = "rbxassetid://73063950477508",
     ),
     OnlyMobile = false,
     Enabled = true,
