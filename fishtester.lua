@@ -98,24 +98,6 @@ MiniBtn.MouseButton1Click:Connect(function()
     SetWindowVisible(minimized)  -- kebalikan: kalau lagi minimized, buka; kalau buka, minimize
 end)
 
--- ====== 4) (Opsional) auto-hide logo saat window terbuka penuh ======
--- kalau kamu mau logo hanya muncul saat di-minimize, aktifkan block ini
-do
-    local function syncLogo()
-        MiniBtn.Visible = minimized
-    end
-    -- coba hook event bawaan WindUI jika ada
-    local ok, ev = pcall(function() return Window.VisibilityChanged end)
-    if ok and typeof(ev) == "RBXScriptSignal" then
-        ev:Connect(function(isVisible)
-            minimized = not isVisible
-            syncLogo()
-        end)
-    end
-    -- inisialisasi
-    syncLogo()
-end
-
 -- ====== 5) (Opsional) simpan posisi tombol antar re-execute ======
 -- pakai getgenv untuk simple persistence di sesi eksekusi
 getgenv().DevlogicMiniPos = getgenv().DevlogicMiniPos or MiniBtn.Position
