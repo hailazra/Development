@@ -6,11 +6,11 @@ local WindUI = loadstring(game:HttpGet(
 --========== WINDOW ==========
 local Window = WindUI:CreateWindow({
     Title         = ".devlogic",
-    Icon          = "brain-circuit",
+    Icon          = "rbxassetid://90524549712661",
     Author        = "Fish It",
     Folder        = ".devlogichub",
     Size          = UDim2.fromOffset(250, 250),
-    Theme         = "Dark",
+    Theme         = "Light",
     Resizable     = false,
     SideBarWidth  = 120,
     HideSearchBar = true,
@@ -18,8 +18,8 @@ local Window = WindUI:CreateWindow({
 
 
 Window:EditOpenButton({
-    Title = "",
-    Icon = "90524549712661",
+    Title = ".devlogic",
+    Icon = "brain-circuit",
     CornerRadius = UDim.new(0,0),
     StrokeThickness = 2,
     Color = ColorSequence.new( -- gradient
