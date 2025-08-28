@@ -5,13 +5,13 @@ local WindUI = loadstring(game:HttpGet(
 
 -- Custom Theme: DarkPurple
 WindUI.Themes["DarkPurple"] = {
-    Accent = "#6d28d9",      -- deep purple for highlights
-    Outline = "#c4b5fd",     -- soft lavender outline
-    Text = "#e9d5ff",        -- light lavender text
-    Placeholder = "#a78bfa", -- muted purple for placeholders
-    Background = "#1e1b29",  -- near-black purple background
-    Button = "#7c3aed",      -- vibrant purple button
-    Icon = "#8b5cf6",        -- lighter purple for icons
+    Accent = "#000000ff",      -- deep purple for highlights
+    Outline = "#000000ff",     -- soft lavender outline
+    Text = "#ffffffff",        -- light lavender text
+    Placeholder = "#535353ff", -- muted purple for placeholders
+    Background = "#000000ff",  -- near-black purple background
+    Button = "#000000ff",      -- vibrant purple button
+    Icon = "#ffffffff",        -- lighter purple for icons
 }
 
 Theme = "DarkPurple"
