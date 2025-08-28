@@ -234,7 +234,6 @@ do -- Webhook
         Values = { "Fish Caught", "Level Up", "Rare Fish" },
         Value  = "Fish Caught",
         Multi  = true,
-        AllowNone = true,
         Callback = function(value)
             print("[GUI] Webhook Event selected:", toListText(value))
         end
