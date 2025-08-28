@@ -90,38 +90,24 @@ SecFishing:Toggle({
         Title = "Auto Fishing",
         State = Controls.AutoFishing or false,
         Description = "Automatically fishes for you.",
-        Callback = function(state)
-            Controls.AutoFishing = state
-            if state then Funcs.StartAutoFishing() else Funcs.StopAutoFishing() end
-        end
-    })
-end
+         Callback = function(state) 
+        print("Toggle Activated" .. tostring(state))
+    end
+})
+
+Window:OnClose(function()
+    print("Window closed")
+    
+    if ConfigManager and configFile then
+        configFile:Set("playerData", MyPlayerData)
+        configFile:Set("lastSave", os.date("%Y-%m-%d %H:%M:%S"))
+        configFile:Save()
+        print("Config auto-saved on close")
+    end
+end)
+
+Window:OnDestroy(function()
+    print("Window destroyed")
+end)
 
 
---========== LIFECYCLE ==========
--- Tidak melakukan cleanup di OnClose (agar minimize → icon tidak memicu unload)
-if type(Window.OnClose) == "function" then
-    Window:OnClose(function()
-        print("Window closed")
-        -- Simpan konfigurasi (opsional); tidak unload feature di sini
-        if typeof(ConfigManager) == "table" and configFile and typeof(configFile.Set) == "function" and typeof(configFile.Save) == "function" then
-            local MyPlayerData = rawget(getgenv(), "MyPlayerData")
-            configFile:Set("playerData", MyPlayerData)
-            configFile:Set("lastSave", os.date("%Y-%m-%d %H:%M:%S"))
-            configFile:Save()
-            print("Config auto-saved on close")
-        end
-    end)
-end
-
--- Cleanup hanya saat benar-benar destroy
-if type(Window.OnDestroy) == "function" then
-    Window:OnDestroy(function()
-        print("Window destroyed")
-        if type(featureDestruct) == "function" then
-            local ok, err = pcall(featureDestruct)
-            if not ok then warn("[Feature.destroy@OnDestroy] error:", err) end
-            featureDestruct = nil
-        end
-    end)
-end
