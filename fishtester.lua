@@ -3,6 +3,20 @@ local WindUI = loadstring(game:HttpGet(
     "https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"
 ))()
 
+-- Custom Theme: DarkPurple
+WindUI.Themes["DarkPurple"] = {
+    Accent = "#6d28d9",      -- deep purple for highlights
+    Outline = "#c4b5fd",     -- soft lavender outline
+    Text = "#e9d5ff",        -- light lavender text
+    Placeholder = "#a78bfa", -- muted purple for placeholders
+    Background = "#1e1b29",  -- near-black purple background
+    Button = "#7c3aed",      -- vibrant purple button
+    Icon = "#8b5cf6",        -- lighter purple for icons
+}
+
+Theme = "DarkPurple"
+
+
 --========== WINDOW ==========
 local Window = WindUI:CreateWindow({
     Title         = ".devlogic",
@@ -10,7 +24,7 @@ local Window = WindUI:CreateWindow({
     Author        = "Fish It",
     Folder        = ".devlogichub",
     Size          = UDim2.fromOffset(250, 250),
-    Theme         = "Dark",
+    Theme         = "DarkPurple",
     Resizable     = false,
     SideBarWidth  = 120,
     HideSearchBar = true,
@@ -18,13 +32,13 @@ local Window = WindUI:CreateWindow({
 
 
 Window:EditOpenButton({
-    Title = ".DL",
+    Title = "",
     Icon = "rbxassetid://73063950477508",
     CornerRadius = UDim.new(0,1),
     StrokeThickness = 1,
     Color = ColorSequence.new( -- gradient
-        Color3.fromHex("FF0F7B"), 
-        Color3.fromHex("F89B29")
+        Color3.fromHex("000000"), 
+        Color3.fromHex("000000")
     ),
     OnlyMobile = false,
     Enabled = true,
@@ -33,11 +47,11 @@ Window:EditOpenButton({
 
 Window:Tag({
     Title = "v0.0.0",
-    Color = Color3.fromHex("#30ff6a")
+    Color = Color3.fromHex("#000000")
 })
 
-local TimeTag = Window:Tag({
-    Title = "00:00",
+Window:Tag({
+    Title = "Dev Version",
     Color = Color3.fromHex("#000000")
 })
 
