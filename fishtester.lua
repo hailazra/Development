@@ -1,6 +1,26 @@
-
 --- WindUI
 local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
+
+--- Safety: Color3.fromHex fallback
+local function hexToColor3(hex)
+    local fn = Color3 and Color3.fromHex
+    if typeof(fn) == "function" then
+        return fn(hex)
+    end
+    hex = tostring(hex or ""):gsub("#","")
+    if #hex ~= 6 then
+        -- default fallback hitam
+        return Color3.new(0, 0, 0)
+    end
+    local r = tonumber(hex:sub(1,2), 16) or 0
+    local g = tonumber(hex:sub(3,4), 16) or 0
+    local b = tonumber(hex:sub(5,6), 16) or 0
+    return Color3.fromRGB(r, g, b)
+end
+
+--- State minimal agar Toggle tidak error
+local Controls = rawget(getgenv(), "logicdevui") and getgenv().logicdevui.Controls or {}
+if type(Controls) ~= "table" then Controls = {} end
 
 --- Window
 local Window = WindUI:CreateWindow({
@@ -17,15 +37,15 @@ local Window = WindUI:CreateWindow({
 
 Window:Tag({
     Title = "v0.0.0",
-    Color = Color3.fromHex("#30ff6a")
+    Color = hexToColor3("#30ff6a")
 })
 Window:Tag({
     Title = "Development",
-    Color = Color3.fromHex("#315dff")
+    Color = hexToColor3("#315dff")
 })
 local TimeTag = Window:Tag({
     Title = "00:00",
-    Color = Color3.fromHex("#000000")
+    Color = hexToColor3("#000000")
 })
 
 -- === Topbar Changelog (simple) ===
@@ -59,55 +79,68 @@ end
 -- name, icon, callback, order
 Window:CreateTopbarButton("changelog", "newspaper", ShowChangelog, 995)
 
-Window:EditOpenButton({
-    Title = "",
-    Icon = "rbxassetid://90524549712661",
-    CornerRadius = UDim.new(0,16),
-    StrokeThickness = 2,
-    Color = ColorSequence.new( -- gradient
-        Color3.fromHex("FF0F7B"), 
-        Color3.fromHex("F89B29")
-    ),
-    OnlyMobile = false,
-    Enabled = true,
-    Draggable = true,
-})
+-- Optional open button; guard jika API tidak ada di WindUI
+if type(Window.EditOpenButton) == "function" then
+    Window:EditOpenButton({
+        Title = "",
+        Icon = "rbxassetid://90524549712661",
+        CornerRadius = UDim.new(0,16),
+        StrokeThickness = 2,
+        Color = ColorSequence.new(
+            hexToColor3("#FF0F7B"),
+            hexToColor3("#F89B29")
+        ),
+        OnlyMobile = false,
+        Enabled = true,
+        Draggable = true,
+    })
+else
+    -- Jika perlu, Anda bisa tampilkan notify atau abaikan saja
+    -- WindUI:Notify({ Title = "Info", Content = "EditOpenButton tidak tersedia di versi ini", Icon = "info" })
+end
 
 --- Tabs
-TabHome     = Window:Tab({ Title = "Home",     Icon = "house" })
-TabMain     = Window:Tab({ Title = "Main",     Icon = "gamepad" })
-TabShop     = Window:Tab({ Title = "Shop",     Icon = "shopping-cart" })
-TabTeleport = Window:Tab({ Title = "Teleport", Icon = "map" })
-TabMisc     = Window:Tab({ Title = "Misc",     Icon = "cog" })
+local TabHome     = Window:Tab({ Title = "Home",     Icon = "house" })
+local TabMain     = Window:Tab({ Title = "Main",     Icon = "gamepad" })
+local TabShop     = Window:Tab({ Title = "Shop",     Icon = "shopping-cart" })
+local TabTeleport = Window:Tab({ Title = "Teleport", Icon = "map" })
+local TabMisc     = Window:Tab({ Title = "Misc",     Icon = "cog" })
 
 --- Home
 TabHome:Section({ Title = ".devlogic", TextXAlignment = "Left",  TextSize = 17 })
 
 --- Fishing
-SecFishing = TabMain:Section({ Title = "Fishing", Icon = "fish", Opened = true })
+local SecFishing = TabMain:Section({ Title = "Fishing", Icon = "fish", Opened = true })
 
 SecFishing:Toggle({
-        Title = "Auto Fishing",
-        State = Controls.AutoFishing or false,
-        Description = "Automatically fishes for you.",
-         Callback = function(state) 
-        print("Toggle Activated" .. tostring(state))
+    Title = "Auto Fishing",
+    State = Controls.AutoFishing or false,
+    Description = "Automatically fishes for you.",
+    Callback = function(state)
+        Controls.AutoFishing = state
+        print("Toggle Activated " .. tostring(state))
     end
 })
 
-Window:OnClose(function()
-    print("Window closed")
-    
-    if ConfigManager and configFile then
-        configFile:Set("playerData", MyPlayerData)
-        configFile:Set("lastSave", os.date("%Y-%m-%d %H:%M:%S"))
-        configFile:Save()
-        print("Config auto-saved on close")
-    end
-end)
+-- Guard event API agar tidak call nil method
+if type(Window.OnClose) == "function" then
+    Window:OnClose(function()
+        print("Window closed")
+        -- Jangan lakukan cleanup feature di OnClose jika hanya minimize → icon
+        if ConfigManager and configFile then
+            configFile:Set("playerData", MyPlayerData)
+            configFile:Set("lastSave", os.date("%Y-%m-%d %H:%M:%S"))
+            configFile:Save()
+            print("Config auto-saved on close")
+        end
+    end)
+end
 
-Window:OnDestroy(function()
-    print("Window destroyed")
-end)
+if type(Window.OnDestroy) == "function" then
+    Window:OnDestroy(function()
+        print("Window destroyed")
+        -- Cleanup feature boleh di sini jika diperlukan
+    end)
+end
 
 
