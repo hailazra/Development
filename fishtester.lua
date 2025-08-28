@@ -17,114 +17,19 @@ local Window = WindUI:CreateWindow({
 })
 
 
--- ========== KONFIG OPEN BUTTON (biar bulat & kosong) ==========
 Window:EditOpenButton({
-  Title            = "",             -- kosongin label
-  Icon             = "",             -- jangan pakai icon lucide
-  CornerRadius     = UDim.new(1, 0), -- bulat penuh
-  StrokeThickness  = 0,
-  OnlyMobile       = false,
-  Enabled          = true,
-  Draggable        = true,
+    Title = "",
+    Icon = "90524549712661",
+    CornerRadius = UDim.new(0,0),
+    StrokeThickness = 2,
+    Color = ColorSequence.new( -- gradient
+        Color3.fromHex("FF0F7B"), 
+        Color3.fromHex("F89B29")
+    ),
+    OnlyMobile = false,
+    Enabled = true,
+    Draggable = true,
 })
-
--- ========== INJECT LOGO KAMU KE DALAM OPEN BUTTON ==========
-local LOGO_ASSET_ID = 90524549712661 -- <-- GANTI dengan ID logo kamu
-local CoreGui = game:GetService("CoreGui")
-
--- helper: cari tombol open WindUI secara defensif
-local function findWindUIOpenButton()
-  -- cari candidate tombol kecil yang muncul ketika minimize
-  local best
-  for _, gui in ipairs(CoreGui:GetDescendants()) do
-    if gui:IsA("ImageButton") or gui:IsA("TextButton") then
-      local name = (gui.Name or ""):lower()
-      -- heuristik: biasanya ada "open" / atau tombol kecil mengambang
-      if name:find("open") or (gui.AbsoluteSize.X <= 120 and gui.AbsoluteSize.Y <= 120) then
-        -- punya UICorner (WindUI pakai ini), draggable look & feels
-        if gui:FindFirstChildOfClass("UICorner") then
-          best = gui
-          break
-        end
-      end
-    end
-  end
-  return best
-end
-
--- pasang logo ketika tombol sudah dibuat oleh WindUI
-task.spawn(function()
-  local btn
-  for _ = 1, 100 do
-    btn = findWindUIOpenButton()
-    if btn then break end
-    task.wait(0.05)
-  end
-  if not btn then
-    warn("[.devlogic] Gagal menemukan OpenButton WindUI.")
-    return
-  end
-
-  -- pastikan bentuk bulat
-  local corner = btn:FindFirstChildOfClass("UICorner") or Instance.new("UICorner")
-  corner.CornerRadius = UDim.new(1, 0)
-  corner.Parent = btn
-
-  -- bersihkan child default (kecuali dekor)
-  for _, c in ipairs(btn:GetChildren()) do
-    if not c:IsA("UICorner") and not c:IsA("UIStroke") and not c:IsA("UIGradient") then
-      c:Destroy()
-    end
-  end
-
-  -- jadikan tombol benar-benar kotak/bulat mungil (opsional, sesuaikan)
-  -- kalau kamu mau ukuran spesifik, set di sini:
-  -- btn.Size = UDim2.fromOffset(56, 56)
-
-  -- tempel logo kamu full-bleed, tapi input transparan agar klik tetap ke tombol
-  local logo = Instance.new("ImageLabel")
-  logo.Name = "DevlogicLogo"
-  logo.BackgroundTransparency = 1
-  logo.Image = ("rbxassetid://%d"):format(LOGO_ASSET_ID)
-  logo.ScaleType = Enum.ScaleType.Fit
-  logo.Size = UDim2.fromScale(1, 1)
-  logo.Position = UDim2.fromScale(0, 0)
-  logo.InputTransparent = true   -- << penting: biar klik tetap kena tombol
-  logo.ZIndex = (btn.ZIndex or 1) + 1
-  logo.Parent = btn
-
-  -- jaga rasio logo supaya tidak gepeng
-  local aspect = Instance.new("UIAspectRatioConstraint")
-  aspect.AspectRatio = 1
-  aspect.DominantAxis = Enum.DominantAxis.Width
-  aspect.Parent = logo
-
-  -- padding kecil biar ada napas (opsional)
-  local pad = Instance.new("UIPadding")
-  pad.PaddingTop    = UDim.new(0, 6)
-  pad.PaddingBottom = UDim.new(0, 6)
-  pad.PaddingLeft   = UDim.new(0, 6)
-  pad.PaddingRight  = UDim.new(0, 6)
-  pad.Parent = logo
-
-  -- (opsional) ring halus biar keliatan tombol
-  local stroke = btn:FindFirstChildOfClass("UIStroke") or Instance.new("UIStroke")
-  stroke.Thickness = 1
-  stroke.Transparency = 0.2
-  stroke.Parent = btn
-
-  -- (opsional) anim tipis saat hover
-  local TweenService = game:GetService("TweenService")
-  local info = TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-  btn.MouseEnter:Connect(function()
-    TweenService:Create(logo, info, { ImageTransparency = 0 }):Play()
-    TweenService:Create(stroke, info, { Transparency = 0.05 }):Play()
-  end)
-  btn.MouseLeave:Connect(function()
-    TweenService:Create(logo, info, { ImageTransparency = 0 }):Play()
-    TweenService:Create(stroke, info, { Transparency = 0.2 }):Play()
-  end)
-end)
 
 -- === Topbar Changelog (simple) ===
 local CHANGELOG = table.concat({
