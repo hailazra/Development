@@ -4,7 +4,7 @@ local WindUI = loadstring(game:HttpGet(
 ))()
 
 -- Custom Theme: DarkPurple
-WindUI.Themes["DarkPurple"] = {
+WindUI.Themes["DarkOpal"] = {
     Accent = "#000000ff",      -- deep purple for highlights
     Outline = "#000000ff",     -- soft lavender outline
     Text = "#ffffffff",        -- light lavender text
@@ -14,7 +14,7 @@ WindUI.Themes["DarkPurple"] = {
     Icon = "#ffffffff",        -- lighter purple for icons
 }
 
-Theme = "DarkPurple"
+Theme = "DarkOpal"
 
 
 --========== WINDOW ==========
@@ -24,7 +24,7 @@ local Window = WindUI:CreateWindow({
     Author        = "Fish It",
     Folder        = ".devlogichub",
     Size          = UDim2.fromOffset(250, 250),
-    Theme         = "DarkPurple",
+    Theme         = "DarkOpal",
     Resizable     = false,
     SideBarWidth  = 120,
     HideSearchBar = true,
@@ -197,15 +197,16 @@ do -- Item
 
     local qty = 1
     SecShopItem:Input({
-        Title = "Item Quantity",
-        Placeholder = "Enter quantity",
-        Value = tostring(qty),
-        NumbersOnly = true,
-        Callback = function(v)
-            qty = tonumber(v) or 1
-            print("[GUI] Set Item Quantity:", qty)
-        end
-    })
+         Title = "Input",
+    Desc = "Input Description",
+    Value = "Default value",
+    InputIcon = "bird",
+    Type = "Input", -- or "Textarea"
+    Placeholder = "Enter text...",
+    Callback = function(input) 
+        print("text entered: " .. input)
+    end
+})
 
     SecShopItem:Button({
         Title = "Buy Item",
