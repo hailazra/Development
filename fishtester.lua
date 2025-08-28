@@ -153,8 +153,8 @@ end
 
 
 --========== TELEPORT ==========
-local SecLocations = TabTeleport:Section({ Title = "Locations", Icon = "map-pin", Opened = true })
-
+local SecLocations = TabTeleport:Section({ Title = "Island", Icon = "map-pin", Opened = true })
+local SecPlayers   = TabTeleport:Section({ Title = "Player", Icon = "user",    Opened = false })
 do
     local LocationDropdown = SecLocations:Dropdown({
         Title  = "Select Location",
@@ -173,9 +173,28 @@ do
     })
 end
 
+do
+    local PlayerDropdown = SecPlayers:Dropdown({
+        Title  = "Select Player",
+        Values = { "Player1", "Player2", "Player3" }, -- Dummy values
+        Value  = "Player1",
+        Callback = function(_) end
+    })
+
+    SecPlayers:Button({
+        Title = "Teleport",
+        Description = "Teleport to the selected player.",
+        Callback = function()
+            local ply = getValue(PlayerDropdown)
+            print("[GUI] Teleport to player:", toListText(ply))
+        end
+    })
+end
+
 --========== MISC ==========
 local SecPlayer  = TabMisc:Section({ Title = "Player",  Icon = "user", Opened = true })
 local SecWebhook = TabMisc:Section({ Title = "Webhook", Icon = "link", Opened = false })
+local SecServer  = TabMisc:Section({ Title = "Server",  Icon = "server", Opened = false })
 
 do -- Player
     SecPlayer:Toggle({
@@ -210,6 +229,16 @@ do -- Webhook
             print("[GUI] Webhook URL set")
         end
     })
+    local Webhook = SecWebhook:Dropdown({
+        Title  = "Select Fish",
+        Values = { "Fish Caught", "Level Up", "Rare Fish" },
+        Value  = "Fish Caught",
+        Multi  = true,
+        AllowNone = true,
+        Callback = function(value)
+            print("[GUI] Webhook Event selected:", toListText(value))
+        end
+    })
 
     SecWebhook:Toggle({
         Title = "Enable Webhook",
@@ -217,6 +246,36 @@ do -- Webhook
         Description = "Enable or disable webhook notifications.",
         Callback = function(state)
             print("[GUI] Webhook Enabled =", state, "URL:", webhookURL)
+        end
+    })
+end
+
+do -- Server
+    local InputJobid = SecServer:Input({
+    Title = "Job ID",
+    Desc = "Enter the Job ID of the server to join.",
+    Value = "000-0000-0000",
+    Type = "Textarea", -- or "Textarea"
+    Placeholder = "Enter Job ID...",
+    Callback = function(input) 
+        print("text entered: " .. input)
+    end
+})
+
+    SecServer:Button({
+        Title = "Join Server",
+        Description = "Join the server with the specified Job ID.",
+        Callback = function()
+            print("[GUI] Hopping to a different server...")
+        end
+    })
+    
+    SecServer:Toggle({
+        Title = "Server Hop",
+        State = false,
+        Description = "Automatically hop to Server Luck",
+        Callback = function(state)
+            print("[GUI] Auto Rejoin =", state)
         end
     })
 end
