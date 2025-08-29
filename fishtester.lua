@@ -446,7 +446,6 @@ local WebhookTgl = TabMisc:Toggle({
     end
 })
 
->>>>>>> 79320a16b128931bf4fbbf53d2fbce5a3007796a
 --========== LIFECYCLE (tanpa cleanup integrasi) ==========
 if type(Window.OnClose) == "function" then
     Window:OnClose(function()
