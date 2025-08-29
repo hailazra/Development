@@ -110,24 +110,6 @@ local DLsec = TabHome:Section({
     TextSize = 17, -- Default Size
 })
 
-local ParaBoutUs = TabHome:Paragraph({
-    Title = "About Us",
-    Desc = "This script still under development, please report any bugs or issues in our discord server.",
-    Color = "Red",
-    Image = "",
-    ImageSize = 30,
-    Thumbnail = "",
-    ThumbnailSize = 80,
-    Locked = false,
-    Buttons = {
-        {
-            Icon = "bird",
-            Title = "Button",
-            Callback = function() print("1 Button") end,
-        }
-    }
-})
-
 --- Main
 local FishSec = TabMain:Section({ 
     Title = "Fishing",
