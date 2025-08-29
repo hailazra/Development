@@ -110,9 +110,9 @@ local DLsec = TabHome:Section({
     TextSize = 17, -- Default Size
 })
 
-local ParaBoutUS = TabMain:Paragraph({
-    Title = "Paragraph with Image, Thumbnail, Buttons",
-    Desc = "Test Paragraph",
+local ParaBoutUs = TabHome:Paragraph({
+    Title = "About Us",
+    Desc = "This script still under development, please report any bugs or issues in our discord server.",
     Color = "Red",
     Image = "",
     ImageSize = 30,
@@ -377,8 +377,6 @@ local PlayerBtn = TabTeleport:Button({
     end
 })
 
-<<<<<<< HEAD
-
 --- Misc
 local ServerSec = TabMisc:Section({ 
     Title = "Join Server",
@@ -421,7 +419,7 @@ local DdServerHop = TabMisc:Dropdown({
     end
 })
 
-local HopServerTgl = TabShop:Toggle({
+local HopServerTgl = TabMisc:Toggle({
     Title = "Auto Hop Server",
     Desc  = "Auto Hop until found desired Server",
     Default = false,
