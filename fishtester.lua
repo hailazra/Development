@@ -110,7 +110,7 @@ TabHome:Section({ Title = ".devlogic", TextXAlignment = "Left", TextSize = 17 })
 local FishSec = TabMain:Section({ 
     Title = "Fishing",
     TextXAlignment = "Left",
-    TextSize = 15, -- Default Size
+    TextSize = 17, -- Default Size
 })
 
 local InputDelay = TabMain:Input({
@@ -142,6 +142,59 @@ local AutoFish = TabMain:Toggle({
 
 local InstantFish = TabMain:Toggle({
     Title = "Instant Fish",
+    Default = false,
+    Callback = function(state) 
+        print("Toggle Activated" .. tostring(state))
+    end
+})
+
+local FavSec = TabMain:Section({ 
+    Title = "Favorite Fish",
+    TextXAlignment = "Left",
+    TextSize = 17, -- Default Size
+})
+
+local DdFavFish = TabMain:Dropdown({
+    Title = "Select Fish",
+    Values = { "Category A", "Category B", "Category C" },
+    Value = { "Category A" },
+    Multi = true,
+    AllowNone = true,
+    Callback = function(option) 
+        print("Categories selected: " ..(option)) 
+    end
+})
+
+local FavFish = TabMain:Toggle({
+    Title = "Auto Favorite Fish",
+    Default = false,
+    Callback = function(state) 
+        print("Toggle Activated" .. tostring(state))
+    end
+})
+
+local SellSec = TabMain:Section({ 
+    Title = "Sell Fish",
+    TextXAlignment = "Left",
+    TextSize = 17, -- Default Size
+})
+
+local SliderSell = TabMain:Slider({
+    Title = "Backpack Capacity",
+    Step = 1,
+    Desc = "CUstom backpack capacity to sell",
+    Value = {
+        Min = 1,
+        Max = 5000,
+        Default =1000,
+    },
+    Callback = function(value)
+        print(value)
+    end
+})
+
+local AutoSell = TabMain:Toggle({
+    Title = "Auto Sell",
     Default = false,
     Callback = function(state) 
         print("Toggle Activated" .. tostring(state))
