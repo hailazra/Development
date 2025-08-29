@@ -118,7 +118,7 @@ local InputDelay = TabMain:Input({
     Desc = "Delay to Cast",
     Value = "",
     Placeholder = "Enter delay",
-    Numeric = true, 
+    Type = "Input", 
     Callback = function(input) 
         print("delay entered: " .. input)
     end
@@ -145,6 +145,64 @@ local InstantFish = TabMain:Toggle({
     Default = false,
     Callback = function(state) 
         print("Toggle Activated" .. tostring(state))
+    end
+})
+
+---- Shop
+local ShopSec = TabShop:Section({ 
+    Title = "Items",
+    TextXAlignment = "Left",
+    TextSize = 15, -- Default Size
+})
+
+local DdRod = TabShop:Dropdown({
+    Title = "Select Rod",
+    Values = { "Category A", "Category B", "Category C" },
+    Value = { "Category A" },
+    Multi = true,
+    AllowNone = true,
+    Callback = function(option) 
+        print("Categories selected: " ..) 
+    end
+})
+
+local BuyRod = TabShop:Button({
+    Title = "Buy Rod",
+    Desc = "Test Button",
+    Locked = false,
+    Callback = function()
+        print("clicked")
+    end
+})
+
+local DdItem = TabShop:Dropdown({
+    Title = "Select Item",
+    Values = { "Item A", "Item B", "Item C" },
+    Value = { "Item A" },
+    Multi = true,
+    AllowNone = true,
+    Callback = function(option) 
+        print("Items selected: " ..) 
+    end
+})
+
+local QtyItem = TabShop:Input({
+    Title = "Quantity",
+    Desc = "Enter quantity",
+    Value = "",
+    Placeholder = "e.g., 1, 5, 10",
+    Type = "Input", 
+    Callback = function(input) 
+        print("Quantity entered: " .. input)
+    end
+})
+
+local BuyItem = TabShop:Button({
+    Title = "Buy Item",
+    Desc = "Test Button",
+    Locked = false,
+    Callback = function()
+        print("clicked")
     end
 })
 
