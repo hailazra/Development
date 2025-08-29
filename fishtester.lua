@@ -104,17 +104,29 @@ end
 TabHome:Section({ Title = ".devlogic", TextXAlignment = "Left", TextSize = 17 })
 
 --- Main
-local SecFishing = TabMain:Section ({ Title = "Fishing", TextXAlignment = "Left", TextSize = 17 })
+local FishSec = TabMain:Section({ 
+    Title = "Fishing",
+    TextXAlignment = "Left",
+    TextSize = 15, -- Default Size
+})
 
-local Input = SecFishing:Input({
-    Title = "Input",
-    Desc = "Input Description",
+local InputDelay = TabMain:Input({
+    Title = "Cast Delay",
+    Desc = "Delay to Cast",
     Value = "Default value",
-    InputIcon = "bird",
+    InputIcon = "fish",
     Type = "Input", -- or "Textarea"
-    Placeholder = "Enter text...",
+    Placeholder = "Enter delay",
     Callback = function(input) 
-        print("text entered: " .. input)
+        print("delay entered: " .. input)
+    end
+})
+
+local ToggleCast = TabMain:Toggle({
+    Title = "Auto Cast",
+    Default = false,
+    Callback = function(state) 
+        print("Toggle Activated" .. tostring(state))
     end
 })
     
