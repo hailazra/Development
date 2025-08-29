@@ -106,12 +106,13 @@ TabHome:Section({ Title = ".devlogic", TextXAlignment = "Left", TextSize = 17 })
 --- Main
 local SecFishing = TabMain:Section ({ Title = "Fishing", TextXAlignment = "Left", TextSize = 17 })
 
-local castdelay = SecFishing:Input({
-    Title       = "Cast Delay",
-    Desc        = "",
-    Value       = "0.5",
-    Type        = "Input",
-    Placeholder = "0.5",
+local Input = SecFishing:Input({
+    Title = "Input",
+    Desc = "Input Description",
+    Value = "Default value",
+    InputIcon = "bird",
+    Type = "Input", -- or "Textarea"
+    Placeholder = "Enter text...",
     Callback = function(input) 
         print("text entered: " .. input)
     end
