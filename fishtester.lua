@@ -106,7 +106,11 @@ do
 end
 
 --========== MAIN → FISHING ==========
-local SecFishing = TabMain:Section({ Title = "Fishing", Icon = "fish", Opened = true })
+local SecFishing = TabMain:Section({
+    Title = "Fishing",
+    TextXAlignment = "Left",
+    TextSize = 17
+})
 do 
 
     local castDelay = 500
