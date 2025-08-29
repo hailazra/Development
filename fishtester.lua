@@ -106,7 +106,7 @@ TabHome:Section({ Title = ".devlogic", TextXAlignment = "Left", TextSize = 17 })
 --- Main
 local SecFishing = TabMain:Section ({ Title = "Fishing", TextXAlignment = "Left", TextSize = 17 })
 
-local castdelay = SecFishing:input({
+local castdelay = SecFishing:Input({
     Title       = "Cast Delay",
     Desc        = "",
     Value       = "0.5",
