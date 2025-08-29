@@ -148,20 +148,6 @@ local InstantFish = TabMain:Toggle({
     end
 })
 
-local SecSellFish = TabMain:Section({ 
-    Title = "Sell Fish",
-    TextXAlignment = "Left",
-    TextSize = 15, -- Default Size
-})
-
-local AutoSellFish = TabMain:Toggle({
-    Title = "Auto Sell Fish",
-    Desc = "Automatically sell fish when inventory is full",
-    Default = false,
-    Callback = function(state) 
-        print("Toggle Activated" .. tostring(state))
-    end
-})
 
 --========== LIFECYCLE (tanpa cleanup integrasi) ==========
 if type(Window.OnClose) == "function" then
