@@ -201,6 +201,30 @@ local AutoSell = TabMain:Toggle({
     end
 })
 
+local GiftSec = TabMain:Section({ 
+    Title = "Gift Fish",
+    TextXAlignment = "Left",
+    TextSize = 17, -- Default Size
+})
+
+local DdGift = TabMain:Dropdown({
+    Title = "Select Player",
+    Values = { "Category A", "Category B", "Category C" },
+    Value = "Category A",
+    Callback = function(option) 
+        print("Category selected: " .. option) 
+    end
+})
+
+local GiftFish = TabMain:Toggle({
+    Title = "Auto Gift Fish",
+    Desc  = "Auto Gift held Fish",
+    Default = false,
+    Callback = function(state) 
+        print("Toggle Activated" .. tostring(state))
+    end
+})
+
 --- Shop
 local ShopSecItem = TabShop:Section({ 
     Title = "Rod & Item",
@@ -279,6 +303,55 @@ local BuyWeatherTgl = TabShop:Toggle({
     Default = false,
     Callback = function(state) 
         print("Toggle Activated" .. tostring(state))
+    end
+})
+
+--- Teleport
+local TeleIslandSec = TabTeleport:Section({ 
+    Title = "Islands",
+    TextXAlignment = "Left",
+    TextSize = 17, -- Default Size
+})
+
+local DdIsland = TabTeleport:Dropdown({
+    Title = "Select Island",
+    Values = { "Category A", "Category B", "Category C" },
+    Value = "Category A",
+    Callback = function(option) 
+        print("Category selected: " .. option) 
+    end
+})
+
+local IslandBtn = TabTeleport:Button({
+    Title = "Teleport To Island",
+    Desc = "",
+    Locked = false,
+    Callback = function()
+        print("clicked")
+    end
+})
+
+local TelePlayerSec = TabTeleport:Section({ 
+    Title = "Players",
+    TextXAlignment = "Left",
+    TextSize = 17, -- Default Size
+})
+
+local DdPlayer = TabTeleport:Dropdown({
+    Title = "Select Player",
+    Values = { "Category A", "Category B", "Category C" },
+    Value = "Category A",
+    Callback = function(option) 
+        print("Category selected: " .. option) 
+    end
+})
+
+local PlayerBtn = TabTeleport:Button({
+    Title = "Teleport To Player",
+    Desc = "",
+    Locked = false,
+    Callback = function()
+        print("clicked")
     end
 })
 
