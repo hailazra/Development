@@ -355,6 +355,93 @@ local PlayerBtn = TabTeleport:Button({
     end
 })
 
+--- Misc
+local ServerSec = TabMisc:Section({ 
+    Title = "Join Server",
+    TextXAlignment = "Left",
+    TextSize = 17, -- Default Size
+})
+
+local InputJobid = TabMisc:Input({
+    Title = "Job Id",
+    Desc = "Input Server Job Id",
+    Value = "",
+    Placeholder = "000-000-000",
+    Type = "Input", 
+    Callback = function(input) 
+        print("delay entered: " .. input)
+    end
+})
+
+local JoinJobid = TabMisc:Button({
+    Title = "Join Server",
+    Desc = "",
+    Locked = false,
+    Callback = function()
+        print("clicked")
+    end
+})
+
+local HopServerSec = TabMisc:Section({ 
+    Title = "Hop Server",
+    TextXAlignment = "Left",
+    TextSize = 17, -- Default Size
+})
+
+local DdServerHop = TabMisc:Dropdown({
+    Title = "Select Server Luck",
+    Values = { "Category A", "Category B", "Category C" },
+    Value = "Category A",
+    Callback = function(option) 
+        print("Category selected: " .. option) 
+    end
+})
+
+local HopServerTgl = TabShop:Toggle({
+    Title = "Auto Hop Server",
+    Desc  = "Auto Hop until found desired Server",
+    Default = false,
+    Callback = function(state) 
+        print("Toggle Activated" .. tostring(state))
+    end
+})
+
+local WebhookSec = TabMisc:Section({ 
+    Title = "Webhook",
+    TextXAlignment = "Left",
+    TextSize = 17, -- Default Size
+})
+
+local WebhookUrl = TabMisc:Input({
+    Title = "Webhook URL",
+    Desc = "Input Webhook URL",
+    Value = "",
+    Placeholder = "discord.gg//",
+    Type = "Input", 
+    Callback = function(input) 
+        print("delay entered: " .. input)
+    end
+})
+
+local DdWebhook = TabMisc:Dropdown({
+    Title = "Select Fish",
+    Values = { "Category A", "Category B", "Category C" },
+    Value = { "Category A" },
+    Multi = true,
+    AllowNone = true,
+    Callback = function(option) 
+        print("Categories selected: " ..game:GetService("HttpService"):JSONEncode(option)) 
+    end
+})
+
+local WebhookTgl = TabMisc:Toggle({
+    Title = "Webhook",
+    Default = false,
+    Callback = function(state) 
+        print("Toggle Activated" .. tostring(state))
+    end
+})
+
 --========== LIFECYCLE (tanpa cleanup integrasi) ==========
 if type(Window.OnClose) == "function" then
     Window:OnClose(function()
