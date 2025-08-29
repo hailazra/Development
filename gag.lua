@@ -113,6 +113,20 @@ local SShopCraft = Window:Section({ Title = "Shop", Icon = "shopping-bag", Opene
 local TabShop   = SShopCraft:Tab({ Title = "Shop",   Icon = "shopping-cart" })
 local TabCraft = SShopCraft:Tab({ Title = "Craft",  Icon = "settings" })
 
+-- === SECTION === --
+-- Home
+local A = TabHome:Section({ 
+    Title = ".devlogic",
+    TextXAlignment = "Left",
+    TextSize = 17, -- Default Size
+})
+
+local B = TabHome:Paragraph({
+    Title = "About Us",
+    Desc = "This script still under development, please report any bugs or issues in our discord server.",
+    Color = "Red",
+    ImageSize = 30,})
+
 
  --========== LIFECYCLE (tanpa cleanup integrasi) ==========
 if type(Window.OnClose) == "function" then
