@@ -3,6 +3,7 @@ local WindUI = loadstring(game:HttpGet(
     "https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"
 ))()
 
+
 --========== WINDOW ==========
 local Window = WindUI:CreateWindow({
     Title         = ".devlogic",
@@ -16,6 +17,7 @@ local Window = WindUI:CreateWindow({
     HideSearchBar = true,
 })
 
+WindUI:SetFont("rbxasset://12187366657")
 
 Window:EditOpenButton({
     Title = "",
