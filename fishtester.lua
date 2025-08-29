@@ -148,61 +148,18 @@ local InstantFish = TabMain:Toggle({
     end
 })
 
----- Shop
-local ShopSec = TabShop:Section({ 
-    Title = "Items",
+local SecSellFish = TabMain:Section({ 
+    Title = "Sell Fish",
     TextXAlignment = "Left",
     TextSize = 15, -- Default Size
 })
 
-local DdRod = TabShop:Dropdown({
-    Title = "Select Rod",
-    Values = { "Category A", "Category B", "Category C" },
-    Value = { "Category A" },
-    Multi = true,
-    AllowNone = true,
-    Callback = function(option) 
-        print("Categories selected: " ..) 
-    end
-})
-
-local BuyRod = TabShop:Button({
-    Title = "Buy Rod",
-    Desc = "Test Button",
-    Locked = false,
-    Callback = function()
-        print("clicked")
-    end
-})
-
-local DdItem = TabShop:Dropdown({
-    Title = "Select Item",
-    Values = { "Item A", "Item B", "Item C" },
-    Value = { "Item A" },
-    Multi = true,
-    AllowNone = true,
-    Callback = function(option) 
-        print("Items selected: " ..) 
-    end
-})
-
-local QtyItem = TabShop:Input({
-    Title = "Quantity",
-    Desc = "Enter quantity",
-    Value = "",
-    Placeholder = "e.g., 1, 5, 10",
-    Type = "Input", 
-    Callback = function(input) 
-        print("Quantity entered: " .. input)
-    end
-})
-
-local BuyItem = TabShop:Button({
-    Title = "Buy Item",
-    Desc = "Test Button",
-    Locked = false,
-    Callback = function()
-        print("clicked")
+local AutoSellFish = TabMain:Toggle({
+    Title = "Auto Sell Fish",
+    Desc = "Automatically sell fish when inventory is full",
+    Default = false,
+    Callback = function(state) 
+        print("Toggle Activated" .. tostring(state))
     end
 })
 
