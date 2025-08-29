@@ -106,16 +106,12 @@ do
 end
 
 --========== MAIN → FISHING ==========
-local SecFishing = TabMain:Section({
-    Title = "Fishing",
-    TextXAlignment = "Left",
-    TextSize = 17
-})
+TabMain:Section({ Title = "Fishing", TextXAlignment = "Left", TextSize = 17 })
 do 
 
     local castDelay = 500
 
-    SecFishing:Input({
+    TabMain:Input({
         Title = "Auto Cast Delay",
         Placeholder = "Delay Cast (ms)",
         Value = tostring(castDelay),
@@ -127,7 +123,7 @@ do
         end
     })
 
-    SecFishing:Toggle({
+    TabMain:Toggle({
         Title = "Auto Cast",
         State = false,
         Description = "Automatically casts your fishing rod.",
@@ -136,7 +132,7 @@ do
         end
     })
 
-    SecFishing:Toggle({
+    TabMain:Toggle({
         Title = "Auto Reel",
         State = false,
         Description = "Automatically reels in your fishing rod.",
@@ -145,7 +141,7 @@ do
         end
     })
 
-    SecFishing:Toggle({
+    TabMain:Toggle({
         Title = "Auto Fishing",
         State = false,
         Description = "Automatically fishes for you.",
