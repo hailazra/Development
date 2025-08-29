@@ -161,7 +161,7 @@ local DdFavFish = TabMain:Dropdown({
     Multi = true,
     AllowNone = true,
     Callback = function(option) 
-        print("Categories selected: " ..(option)) 
+        print("Categories selected: " ..game:GetService("HttpService"):JSONEncode(option)) 
     end
 })
 
@@ -201,6 +201,86 @@ local AutoSell = TabMain:Toggle({
     end
 })
 
+--- Shop
+local ShopSecItem = TabShop:Section({ 
+    Title = "Rod & Item",
+    TextXAlignment = "Left",
+    TextSize = 17, -- Default Size
+})
+
+local DdBuyRod = TabShop:Dropdown({
+    Title = "Select Rod",
+    Values = { "Category A", "Category B", "Category C" },
+    Value = { "Category A" },
+    Multi = true,
+    AllowNone = true,
+    Callback = function(option) 
+        print("Categories selected: " ..game:GetService("HttpService"):JSONEncode(option)) 
+    end
+})
+
+local BuyRodBtn = TabShop:Button({
+    Title = "Buy Rod",
+    Desc = "",
+    Locked = false,
+    Callback = function()
+        print("clicked")
+    end
+})
+
+local DdBuyItem = TabShop:Dropdown({
+    Title = "Select Item",
+    Values = { "Category A", "Category B", "Category C" },
+    Value = { "Category A" },
+    Multi = true,
+    AllowNone = true,
+    Callback = function(option) 
+        print("Categories selected: " ..game:GetService("HttpService"):JSONEncode(option)) 
+    end
+})
+
+local InputItemQty = TabShop:Input({
+    Title = "Quantity",
+    Desc = "Item Quantity",
+    Value = "",
+    Placeholder = "Enter quantity",
+    Type = "Input", 
+    Callback = function(input) 
+        print("delay entered: " .. input)
+    end
+})
+
+local BuyItemBtn = TabShop:Button({
+    Title = "Buy Item",
+    Desc = "",
+    Locked = false,
+    Callback = function()
+        print("clicked")
+    end
+})
+
+local ShopSecWeather = TabShop:Section({ 
+    Title = "Weather",
+    TextXAlignment = "Left",
+    TextSize = 17, -- Default Size
+})
+
+local DdWeather = TabShop:Dropdown({
+    Title = "Select Weather",
+    Values = { "Category A", "Category B", "Category C" },
+    Value = "Category A",
+    Callback = function(option) 
+        print("Category selected: " .. option) 
+    end
+})
+
+local BuyWeatherTgl = TabShop:Toggle({
+    Title = "Auto Buy Weather",
+    Default = false,
+    Callback = function(state) 
+        print("Toggle Activated" .. tostring(state))
+    end
+})
 
 --========== LIFECYCLE (tanpa cleanup integrasi) ==========
 if type(Window.OnClose) == "function" then
