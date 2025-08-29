@@ -99,6 +99,7 @@ end
 --========== TABS ==========
  TabHome     = Window:Tab({ Title = "Home",     Icon = "house" })
  TabMain     = Window:Tab({ Title = "Main",     Icon = "gamepad" })
+ TabShop     = Window:Tab({ Title = "Shop",     Icon = "shopping-bag" })
  TabTeleport = Window:Tab({ Title = "Teleport", Icon = "map" })
  TabMisc     = Window:Tab({ Title = "Misc",     Icon = "cog" })
 
@@ -115,6 +116,7 @@ local FishSec = TabMain:Section({
 local InputDelay = TabMain:Input({
     Title = "Cast Delay",
     Desc = "Delay to Cast",
+    Value = "",
     Placeholder = "Enter delay",
     Numeric = true, 
     Callback = function(input) 
