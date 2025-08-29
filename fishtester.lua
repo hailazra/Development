@@ -107,7 +107,6 @@ end
 
 --========== MAIN → FISHING ==========
 TabMain:Section({ Title = "Fishing", TextXAlignment = "Left", TextSize = 17 })
-do 
 
     local castDelay = 500
 
@@ -149,7 +148,6 @@ do
             print("[GUI] Auto Fishing =", state)
         end
     })
-end
 
 
 --========== TELEPORT ==========
