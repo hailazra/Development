@@ -116,7 +116,7 @@ local TabCraft = SShopCraft:Tab({ Title = "Craft",  Icon = "settings" })
 -- === SECTION === --
 -- Home
 local A = TabHome:Section({ 
-    Title = ".devlogic",
+    Title = "Important",
     TextXAlignment = "Left",
     TextSize = 17, -- Default Size
 })
@@ -127,6 +127,52 @@ local B = TabHome:Paragraph({
     Color = "Red",
     ImageSize = 30,})
 
+local C = TabHome:Button({
+    Title = ".devlogic Discord",
+    Icon  = "message-circle",
+    Callback = function()
+        if setclipboard then
+            setclipboard("https://discord.gg/3AzvRJFT3M") -- ganti invite kamu
+        end
+    end
+})
+
+-- Farm
+-- Plants & Fruits
+local D_S = TabPlants:Section({ 
+    Title = "Auto Plant Seeds",
+    TextXAlignment = "Left",
+    TextSize = 17, -- Default Size
+})
+
+local D_DDM = TabPlants:Dropdown({
+    Title = "Select Seeds",
+    Values = { "Category A", "Category B", "Category C" },
+    Value = { "Category A" },
+    Multi = true,
+    AllowNone = true,
+    Callback = function(option) 
+        print("Categories selected: " ..game:GetService("HttpService"):JSONEncode(option)) 
+    end
+})
+
+local D_DD = TabPlants:Dropdown({
+    Title = "Select Position",
+    Values = { "Category A", "Category B", "Category C" },
+    Value = "Category A",
+    Callback = function(option) 
+        print("Category selected: " .. option) 
+    end
+})
+
+local D_TGL = TabPlants:Toggle({
+    Title = "Auto Plant Seeds",
+    Default = false,
+    Callback = function(state) 
+        print("Toggle Activated" .. tostring(state))
+    end
+})
+    
 
  --========== LIFECYCLE (tanpa cleanup integrasi) ==========
 if type(Window.OnClose) == "function" then
