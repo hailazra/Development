@@ -114,9 +114,9 @@ local InputDelay = TabMain:Input({
     Title = "Cast Delay",
     Desc = "Delay to Cast",
     Value = "Default value",
-    InputIcon = "fish",
     Type = "Input", -- or "Textarea"
     Placeholder = "Enter delay",
+    Numeric = true, 
     Callback = function(input) 
         print("delay entered: " .. input)
     end
@@ -130,7 +130,21 @@ local ToggleCast = TabMain:Toggle({
     end
 })
     
+local AutoFish = TabMain:Toggle({
+    Title = "Auto Fishing",
+    Default = false,
+    Callback = function(state) 
+        print("Toggle Activated" .. tostring(state))
+    end
+})
 
+local InstantFish = TabMain:Toggle({
+    Title = "Instant Fish",
+    Default = false,
+    Callback = function(state) 
+        print("Toggle Activated" .. tostring(state))
+    end
+})
 
 --========== LIFECYCLE (tanpa cleanup integrasi) ==========
 if type(Window.OnClose) == "function" then
