@@ -501,6 +501,14 @@ local favpet_ddm = favpet_sec:Dropdown({
     end
 })
 
+local favpet_tgl = favpet_sec:Toggle({
+    Title = "Auto Favorite Pet",
+    Default = false,
+    Callback = function(state) 
+        print("Toggle Activated" .. tostring(state))
+    end
+})
+
 --- Gift Pets and Fruits
 local giftpetfruit_sec = TabBackpack:Section({ 
     Title = "Auto Gift Pets & Fruits",
@@ -510,7 +518,7 @@ local giftpetfruit_sec = TabBackpack:Section({
 })
 
 local giftpetfruitplayer_dd = giftpetfruit_sec:Dropdown({
-    Title = "Position",
+    Title = "Select Player",
     Values = { "World A", "World B", "World C" },
     Value = "World A",
     Callback = function(option) 
