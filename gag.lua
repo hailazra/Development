@@ -137,8 +137,8 @@ local DiscordBtn = TabHome:Button({
     end
 })
 
--- Farm
--- Plants & Fruits
+-- === Plants & Fruits === ---
+-- Auto Plant Seeds
 local APS = TabPlants:Section({ 
     Title = "Auto Plant Seeds",
     TextXAlignment = "Left",
@@ -173,7 +173,138 @@ local APTGL = APS:Toggle({
         print("Toggle Activated" .. tostring(state))
     end
 })
-    
+
+--- Auto Collect Fruits
+local ACS = TabPlants:Section({ 
+    Title = "Auto Collect Fruits",
+    TextXAlignment = "Left",
+    TextSize = 17, -- Default Size
+    Opened = false
+})
+
+local ACDDM = ACS:Dropdown({
+    Title = "Select Fruits",
+    Values = { "Category A", "Category B", "Category C" },
+    Value = { "Category A" },
+    Multi = true,
+    AllowNone = true,
+    Callback = function(option) 
+        print("Categories selected: " ..game:GetService("HttpService"):JSONEncode(option)) 
+    end
+})
+
+local ACWLDDM = ACS:Dropdown({
+    Title = "Whitelist Mutation",
+    Values = { "World A", "World B", "World C" },
+    Value = { "World A" },
+    Multi = true,
+    AllowNone = true,
+    Callback = function(option) 
+        print("Worlds selected: " ..game:GetService("HttpService"):JSONEncode(option)) 
+    end
+})
+
+local ACBLDDM = ACS:Dropdown({
+    Title = "Blacklist Mutation",
+    Values = { "World A", "World B", "World C" },
+    Value = { "World A" },
+    Multi = true,
+    AllowNone = true,
+    Callback = function(option) 
+        print("Worlds selected: " ..game:GetService("HttpService"):JSONEncode(option)) 
+    end
+})
+
+local ACWDD = ACS:Dropdown({
+    Title = "Weight Threshold",
+    Values = { "World A", "World B", "World C" },
+    Value = "World A",
+    Callback = function(option) 
+        print("World selected: " .. option) 
+    end
+})
+
+local ACWINPUT = ACS:Input({
+    Title = "Weight",
+    Placeholder = "e.g 30",
+    Value = "",
+    Numeric = false,
+    Callback = function(value) 
+        print("Input: " .. tostring(value)) 
+    end
+})
+
+local ACTGL = ACS:Toggle({
+    Title = "Auto Collect Fruits",
+    Default = false,
+    Callback = function(state) 
+        print("Toggle Activated" .. tostring(state))
+    end
+})
+
+--- Move Plants
+local MPS = TabPlants:Section({ 
+    Title = "Move Plants",
+    TextXAlignment = "Left",
+    TextSize = 17, -- Default Size
+    Opened = false
+})
+
+local MPDDM = MPS:Dropdown({
+    Title = "Select Plants",
+    Values = { "Category A", "Category B", "Category C" },
+    Value = { "Category A" },
+    Multi = true,
+    AllowNone = true,
+    Callback = function(option) 
+        print("Categories selected: " ..game:GetService("HttpService"):JSONEncode(option)) 
+    end
+})
+
+local MPDD = MPS:Dropdown({
+    Title = "Position",
+    Values = { "World A", "World B", "World C" },
+    Value = "World A",
+    Callback = function(option) 
+        print("World selected: " .. option) 
+    end
+})
+
+local MPTGL = MPS:Toggle({
+    Title = "Auto Move Plants",
+    Default = false,
+    Callback = function(state) 
+        print("Toggle Activated" .. tostring(state))
+    end
+})
+
+--- ==== 
+local SSS = TabSprinkler:Section({ 
+    Title = "Auto Sprinkler",
+    TextXAlignment = "Left",
+    TextSize = 17, -- Default Size
+})
+
+local SSDDM = TabSprinkler:Dropdown({
+    Title = "Select Sprinkler",
+    Values = { "Category A", "Category B", "Category C" },
+    Value = { "Category A" },
+    Multi = true,
+    AllowNone = true,
+    Callback = function(option) 
+        print("Categories selected: " ..game:GetService("HttpService"):JSONEncode(option)) 
+    end
+})
+
+local SSDD = TabSprinkler:Dropdown({
+    Title = "Position",
+    Values = { "World A", "World B", "World C" },
+    Value = "World A",
+    Callback = function(option) 
+        print("World selected: " .. option) 
+    end
+})
+
 
  --========== LIFECYCLE (tanpa cleanup integrasi) ==========
 if type(Window.OnClose) == "function" then
