@@ -512,7 +512,7 @@ local favpet_tgl = favpet_sec:Toggle({
 
 --- Auto Sell Pets
 local sellpet_sec = TabBackpack:Section({ 
-    Title = "Auto Favorite Pets",
+    Title = "Auto Sell Pets",
     TextXAlignment = "Left",
     TextSize = 17, -- Default Size
     Opened = false
