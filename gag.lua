@@ -14,7 +14,7 @@ local Window = WindUI:CreateWindow({
     Theme         = "Dark",
     Resizable     = false,
     SideBarWidth  = 120,
-    HideSearchBar = true,
+    HideSearchBar = false,
 })
 
 WindUI:SetFont("rbxasset://12187366657")
@@ -106,7 +106,6 @@ local TabSprinkler  = SFarm:Tab({ Title = "Sprinkler",       Icon = "droplets" }
 -- Inventory
 local SInventory   = Window:Section({ Title = "Inventory", Icon = "backpack", Opened = false })
 local TabBackpack = SInventory:Tab({ Title = "Inventory", Icon = "backpack" })
-local TabGift      = SInventory:Tab({ Title = "Gift", Icon = "gift" })
 -- Pet & Egg
 local SPetEgg    = Window:Section({ Title = "Pet & Egg", Icon = "egg", Opened = false })
 local TabPet     = SPetEgg:Tab({ Title = "Pet",     Icon = "paw-print" })
@@ -502,8 +501,150 @@ local favpet_ddm = favpet_sec:Dropdown({
     end
 })
 
-local favpet_tgl = favpet_sec:Toggle({
-    Title = "Auto Favorite Pet",
+--- Gift Pets and Fruits
+local giftpetfruit_sec = TabBackpack:Section({ 
+    Title = "Auto Gift Pets & Fruits",
+    TextXAlignment = "Left",
+    TextSize = 17, -- Default Size
+    Opened = false
+})
+
+local giftpetfruitplayer_dd = giftpetfruit_sec:Dropdown({
+    Title = "Position",
+    Values = { "World A", "World B", "World C" },
+    Value = "World A",
+    Callback = function(option) 
+        print("World selected: " .. option) 
+    end
+})
+
+local giftpet_ddm = giftpetfruit_sec:Dropdown({
+    Title = "Select Pet",
+    Values = { "Category A", "Category B", "Category C" },
+    Value = { "Category A" },
+    Multi = true,
+    AllowNone = true,
+    Callback = function(option) 
+        print("Categories selected: " ..game:GetService("HttpService"):JSONEncode(option)) 
+    end
+})
+
+local giftfruit_ddm = giftpetfruit_sec:Dropdown({
+    Title = "Select Fruit",
+    Values = { "Category A", "Category B", "Category C" },
+    Value = { "Category A" },
+    Multi = true,
+    AllowNone = true,
+    Callback = function(option) 
+        print("Categories selected: " ..game:GetService("HttpService"):JSONEncode(option)) 
+    end
+})
+
+local giftpetfruit_in = giftpetfruit_sec:Input({
+    Title = "Gift Delay",
+    Placeholder = "e.g 0.5 (seconds)",
+    Value = "",
+    Numeric = false,
+    Callback = function(value) 
+        print("Input: " .. tostring(value)) 
+    end
+})
+
+local giftpetfruit_tgl = giftpetfruit_sec:Toggle({
+    Title = "Auto Gift Pets/Fruits",
+    Default = false,
+    Callback = function(state) 
+        print("Toggle Activated" .. tostring(state))
+    end
+})
+
+local accgiftpetfruit_tgl = giftpetfruit_sec:Toggle({
+    Title = "Auto Accept Gift",
+    Default = false,
+    Callback = function(state) 
+        print("Toggle Activated" .. tostring(state))
+    end
+})
+
+--- ==== TAB PET & EGG === ---
+--- ==== PET === ---
+--- Pet Loadout
+local petloadout_sec = TabPet:Section({ 
+    Title = "Pet Loadout",
+    TextXAlignment = "Left",
+    TextSize = 17, -- Default Size
+    Opened = false
+})
+
+local petloadout_in = petloadout_sec:Input({
+    Title = "Loadout Name",
+    Placeholder = "Load Out Name",
+    Value = "",
+    Numeric = false,
+    Callback = function(value) 
+        print("Input: " .. tostring(value)) 
+    end
+})
+
+local petloadoutsave_btn = petloadout_sec:Button({
+    Title = "Save Loadout",
+    Desc = "Save Current Loadout",
+    Locked = false,
+    Callback = function()
+        print("clicked")
+    end
+})
+
+local petloadout_dd = petloadout_sec:Dropdown({
+    Title = "Select Loadout",
+    Values = { "World A", "World B", "World C" },
+    Value = "World A",
+    Callback = function(option) 
+        print("World selected: " .. option) 
+    end
+})
+
+local petloadoutload_btn = petloadout_sec:Button({
+    Title = "Change Loadout",
+    Desc = "Load Selected Loadout",
+    Locked = false,
+    Callback = function()
+        print("clicked")
+    end
+})
+
+--- Boost Pets
+local boostpet_sec = TabPet:Section({ 
+    Title = "Boost Pets",
+    TextXAlignment = "Left",
+    TextSize = 17, -- Default Size
+    Opened = false
+})
+
+local boostpetboost_ddm = boostpet_sec:Dropdown({
+    Title = "Select Boost",
+    Values = { "Category A", "Category B", "Category C" },
+    Value = { "Category A" },
+    Multi = true,
+    AllowNone = true,
+    Callback = function(option) 
+        print("Categories selected: " ..game:GetService("HttpService"):JSONEncode(option)) 
+    end
+})
+
+local boostpetselect_ddm = boostpet_sec:Dropdown({
+    Title = "Select Pet",
+    Values = { "Category A", "Category B", "Category C" },
+    Value = { "Category A" },
+    Multi = true,
+    AllowNone = true,
+    Callback = function(option) 
+        print("Categories selected: " ..game:GetService("HttpService"):JSONEncode(option)) 
+    end
+})
+
+local boostpet_tgl = boostpet_sec:Toggle({
+    Title = "Auto Boost Pet",
     Default = false,
     Callback = function(state) 
         print("Toggle Activated" .. tostring(state))
@@ -511,7 +652,7 @@ local favpet_tgl = favpet_sec:Toggle({
 })
 
 --- Auto Sell Pets
-local sellpet_sec = TabBackpack:Section({ 
+local sellpet_sec = TabPet:Section({ 
     Title = "Auto Sell Pets",
     TextXAlignment = "Left",
     TextSize = 17, -- Default Size
@@ -550,6 +691,69 @@ local sellpetweight_in = sellpet_sec:Input({
 
 local sellpet_tgl = sellpet_sec:Toggle({
     Title = "Auto Sell Pet",
+    Default = false,
+    Callback = function(state) 
+        print("Toggle Activated" .. tostring(state))
+    end
+})
+
+--- === EGG === ---
+--- Plaace Egg
+local placeegg_sec = TabEgg:Section({ 
+    Title = "Auto Place Egg",
+    TextXAlignment = "Left",
+    TextSize = 17, -- Default Size
+})
+
+local placeeggslot_in = TabEgg:Input({
+    Title = "Max Egg Slot",
+    Placeholder = "e.g 3",
+    Value = "Input number of your egg slot",
+    Numeric = false,
+    Callback = function(value) 
+        print("Input: " .. tostring(value)) 
+    end
+})
+
+local placeeggselect_ddm = TabEgg:Dropdown({
+    Title = "Select Egg",
+    Values = { "Category A", "Category B", "Category C" },
+    Value = { "Category A" },
+    Multi = true,
+    AllowNone = true,
+    Callback = function(option) 
+        print("Categories selected: " ..game:GetService("HttpService"):JSONEncode(option)) 
+    end
+})
+
+local placeegg_tgl = TabEgg:Toggle({
+    Title = "Auto Place Egg",
+    Default = false,
+    Callback = function(state) 
+        print("Toggle Activated" .. tostring(state))
+    end
+})
+
+--- Hatch Egg
+local hatchegg_sec = TabEgg:Section({ 
+    Title = "Auto Place Egg",
+    TextXAlignment = "Left",
+    TextSize = 17, -- Default Size
+})
+
+local hatcheggselect_ddm = TabEgg:Dropdown({
+    Title = "Select Egg",
+    Values = { "Category A", "Category B", "Category C" },
+    Value = { "Category A" },
+    Multi = true,
+    AllowNone = true,
+    Callback = function(option) 
+        print("Categories selected: " ..game:GetService("HttpService"):JSONEncode(option)) 
+    end
+})
+
+local hatchegg_tgl = TabEgg:Toggle({
+    Title = "Auto Hatch Egg",
     Default = false,
     Callback = function(state) 
         print("Toggle Activated" .. tostring(state))
