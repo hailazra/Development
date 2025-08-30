@@ -104,7 +104,7 @@ local SFarm = Window:Section({ Title = "Farm", Icon = "wheat", Opened = false })
 local TabPlants     = SFarm:Tab({ Title = "Plants & Fruits", Icon = "sprout" })
 local TabSprinkler  = SFarm:Tab({ Title = "Sprinkler",       Icon = "droplets" })
 -- Inventory
-local SInventory = Window:Tab({ Title = "Inventory", Icon = "backpack" })
+local SInventory = Window:Section({ Title = "Inventory", Icon = "backpack", Opened = false })
 local TabInventory = SInventory:Tab({ Title = "Inventory", Icon = "backpack" })
 local TabGift = SInventory:Tab({ Title = "Gift", Icon = "gift" })
 -- Pet & Egg
