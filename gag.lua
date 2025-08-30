@@ -115,19 +115,19 @@ local TabCraft = SShopCraft:Tab({ Title = "Craft",  Icon = "settings" })
 
 -- === SECTION === --
 -- Home
-local A = TabHome:Section({ 
+local ImportanSec = TabHome:Section({ 
     Title = "Important",
     TextXAlignment = "Left",
     TextSize = 17, -- Default Size
 })
 
-local B = TabHome:Paragraph({
+local AboutUs = TabHome:Paragraph({
     Title = "About Us",
     Desc = "This script still under development, please report any bugs or issues in our discord server.",
     Color = "Red",
     ImageSize = 30,})
 
-local C = TabHome:Button({
+local DiscordBtn = TabHome:Button({
     Title = ".devlogic Discord",
     Icon  = "message-circle",
     Callback = function()
@@ -139,13 +139,14 @@ local C = TabHome:Button({
 
 -- Farm
 -- Plants & Fruits
-local D_S = TabPlants:Section({ 
+local APS = TabPlants:Section({ 
     Title = "Auto Plant Seeds",
     TextXAlignment = "Left",
     TextSize = 17, -- Default Size
+    Opened = true
 })
 
-local D_DDM = TabPlants:Dropdown({
+local APDDM = APS:Dropdown({
     Title = "Select Seeds",
     Values = { "Category A", "Category B", "Category C" },
     Value = { "Category A" },
@@ -156,7 +157,7 @@ local D_DDM = TabPlants:Dropdown({
     end
 })
 
-local D_DD = TabPlants:Dropdown({
+local APDD = APS:Dropdown({
     Title = "Select Position",
     Values = { "Category A", "Category B", "Category C" },
     Value = "Category A",
@@ -165,7 +166,7 @@ local D_DD = TabPlants:Dropdown({
     end
 })
 
-local D_TGL = TabPlants:Toggle({
+local APTGL = APS:Toggle({
     Title = "Auto Plant Seeds",
     Default = false,
     Callback = function(state) 
