@@ -100,21 +100,21 @@ end
 -- Home
 local TabHome = Window:Tab({ Title = "Home", Icon = "house" })
 -- Farm
-local SFarm = Window:Section({ Title = "Farm", Icon = "wheat", Opened = false })
+local SFarm         = Window:Section({ Title = "Farm", Icon = "wheat", Opened = false })
 local TabPlants     = SFarm:Tab({ Title = "Plants & Fruits", Icon = "sprout" })
 local TabSprinkler  = SFarm:Tab({ Title = "Sprinkler",       Icon = "droplets" })
 -- Inventory
-local SInventory = Window:Section({ Title = "Inventory", Icon = "backpack", Opened = false })
+local SInventory   = Window:Section({ Title = "Inventory", Icon = "backpack", Opened = false })
 local TabInventory = SInventory:Tab({ Title = "Inventory", Icon = "backpack" })
-local TabGift = SInventory:Tab({ Title = "Gift", Icon = "gift" })
+local TabGift      = SInventory:Tab({ Title = "Gift", Icon = "gift" })
 -- Pet & Egg
-local SPetEgg = Window:Section({ Title = "Pet & Egg", Icon = "egg", Opened = false })
+local SPetEgg    = Window:Section({ Title = "Pet & Egg", Icon = "egg", Opened = false })
 local TabPet     = SPetEgg:Tab({ Title = "Pet",     Icon = "paw-print" })
 local TabEgg     = SPetEgg:Tab({ Title = "Egg",     Icon = "egg" })
 -- Shop & Craft
 local SShopCraft = Window:Section({ Title = "Shop", Icon = "shopping-bag", Opened = false })
-local TabShop   = SShopCraft:Tab({ Title = "Shop",   Icon = "shopping-cart" })
-local TabCraft = SShopCraft:Tab({ Title = "Craft",  Icon = "settings" })
+local TabShop    = SShopCraft:Tab({ Title = "Shop",   Icon = "shopping-cart" })
+local TabCraft   = SShopCraft:Tab({ Title = "Craft",  Icon = "settings" })
 
 -- === SECTION === --
 -- Home
