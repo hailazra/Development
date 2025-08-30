@@ -105,7 +105,7 @@ local TabPlants     = SFarm:Tab({ Title = "Plants & Fruits", Icon = "sprout" })
 local TabSprinkler  = SFarm:Tab({ Title = "Sprinkler",       Icon = "droplets" })
 -- Inventory
 local SInventory   = Window:Section({ Title = "Inventory", Icon = "backpack", Opened = false })
-local TabInventory = SInventory:Tab({ Title = "Inventory", Icon = "backpack" })
+local TabBackpack = SInventory:Tab({ Title = "Inventory", Icon = "backpack" })
 local TabGift      = SInventory:Tab({ Title = "Gift", Icon = "gift" })
 -- Pet & Egg
 local SPetEgg    = Window:Section({ Title = "Pet & Egg", Icon = "egg", Opened = false })
@@ -446,7 +446,7 @@ local shovelsprinkler_tgl = TabSprinkler:Toggle({
 
 --- ==== TAB INVENTORY === ---
 --- Auto Favorite Fruit
-local favfruit_sec = TabInventory:Section({ 
+local favfruit_sec = TabBackpack:Section({ 
     Title = "Auto Favorite Fruits",
     TextXAlignment = "Left",
     TextSize = 17, -- Default Size
@@ -484,7 +484,7 @@ local favfruit_tgl = favfruit_sec:Toggle({
 })
 
 --- Auto Favorite Pets
-local favpet_sec = TabInventory:Section({ 
+local favpet_sec = TabBackpack:Section({ 
     Title = "Auto Favorite Pets",
     TextXAlignment = "Left",
     TextSize = 17, -- Default Size
@@ -511,7 +511,7 @@ local favpet_tgl = favpet_sec:Toggle({
 })
 
 --- Auto Sell Pets
-local sellpet_sec = TabInventory:Section({ 
+local sellpet_sec = TabBackpack:Section({ 
     Title = "Auto Favorite Pets",
     TextXAlignment = "Left",
     TextSize = 17, -- Default Size
