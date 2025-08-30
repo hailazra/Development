@@ -100,9 +100,13 @@ end
 -- Home
 local TabHome = Window:Tab({ Title = "Home", Icon = "house" })
 -- Farm
-local SFarm = Window:Section({ Title = "Farm", Icon = "wheat", Opened = true })
+local SFarm = Window:Section({ Title = "Farm", Icon = "wheat", Opened = false })
 local TabPlants     = SFarm:Tab({ Title = "Plants & Fruits", Icon = "sprout" })
 local TabSprinkler  = SFarm:Tab({ Title = "Sprinkler",       Icon = "droplets" })
+-- Inventory
+local SInventory = Window:Tab({ Title = "Inventory", Icon = "backpack" })
+local TabInventory = SInventory:Tab({ Title = "Inventory", Icon = "backpack" })
+local TabGift = SInventory:Tab({ Title = "Gift", Icon = "gift" })
 -- Pet & Egg
 local SPetEgg = Window:Section({ Title = "Pet & Egg", Icon = "egg", Opened = false })
 local TabPet     = SPetEgg:Tab({ Title = "Pet",     Icon = "paw-print" })
@@ -138,14 +142,14 @@ local DiscordBtn = TabHome:Button({
 
 -- === Plants & Fruits === ---
 -- Auto Plant Seeds
-local APS = TabPlants:Section({ 
+local plantseed_sec = TabPlants:Section({ 
     Title = "Auto Plant Seeds",
     TextXAlignment = "Left",
     TextSize = 17, -- Default Size
     Opened = true
 })
 
-local APDDM = APS:Dropdown({
+local plantseed_ddm = plantseed_sec:Dropdown({
     Title = "Select Seeds",
     Values = { "Category A", "Category B", "Category C" },
     Value = { "Category A" },
@@ -156,7 +160,7 @@ local APDDM = APS:Dropdown({
     end
 })
 
-local APDD = APS:Dropdown({
+local plantseedpos_dd = plantseed_sec:Dropdown({
     Title = "Select Position",
     Values = { "Category A", "Category B", "Category C" },
     Value = "Category A",
@@ -165,7 +169,7 @@ local APDD = APS:Dropdown({
     end
 })
 
-local APTGL = APS:Toggle({
+local plantseed_tgl = plantseed_sec:Toggle({
     Title = "Auto Plant Seeds",
     Default = false,
     Callback = function(state) 
@@ -174,14 +178,14 @@ local APTGL = APS:Toggle({
 })
 
 --- Auto Collect Fruits
-local ACFS = TabPlants:Section({ 
+local collectfruit_sec = TabPlants:Section({ 
     Title = "Auto Collect Fruits",
     TextXAlignment = "Left",
     TextSize = 17, -- Default Size
     Opened = false
 })
 
-local ACFDDM = ACFS:Dropdown({
+local collectfruit_ddm = collectfruit_sec:Dropdown({
     Title = "Select Fruits",
     Values = { "Category A", "Category B", "Category C" },
     Value = { "Category A" },
@@ -192,7 +196,7 @@ local ACFDDM = ACFS:Dropdown({
     end
 })
 
-local ACFWLDDM = ACFS:Dropdown({
+local collectwhitelist_ddm = collectfruit_sec:Dropdown({
     Title = "Whitelist Mutation",
     Values = { "World A", "World B", "World C" },
     Value = { "World A" },
@@ -203,7 +207,7 @@ local ACFWLDDM = ACFS:Dropdown({
     end
 })
 
-local ACFBLDDM = ACFS:Dropdown({
+local collectblacklist_ddm = collectfruit_sec:Dropdown({
     Title = "Blacklist Mutation",
     Values = { "World A", "World B", "World C" },
     Value = { "World A" },
@@ -214,7 +218,7 @@ local ACFBLDDM = ACFS:Dropdown({
     end
 })
 
-local ACFWDD = ACFS:Dropdown({
+local collectthershold_dd = collectfruit_sec:Dropdown({
     Title = "Weight Threshold",
     Values = { "World A", "World B", "World C" },
     Value = "World A",
@@ -223,7 +227,7 @@ local ACFWDD = ACFS:Dropdown({
     end
 })
 
-local ACFWINPUT = ACFS:Input({
+local collectweight_in = collectfruit_sec:Input({
     Title = "Weight",
     Placeholder = "e.g 30",
     Value = "",
@@ -233,7 +237,7 @@ local ACFWINPUT = ACFS:Input({
     end
 })
 
-local ACFTGL = ACFS:Toggle({
+local collectfruit_tgl = collectfruit_sec:Toggle({
     Title = "Auto Collect Fruits",
     Default = false,
     Callback = function(state) 
@@ -241,78 +245,15 @@ local ACFTGL = ACFS:Toggle({
     end
 })
 
---- Auto Water Plants
-local AWPS = TabPlants:Section({ 
-    Title = "Auto Water Plants",
-    TextXAlignment = "Left",
-    TextSize = 17, -- Default Size
-    Opened = false
-})
-
-local AWPDDM = AWPS:Dropdown({
-    Title = "Select Plants",
-    Values = { "Category A", "Category B", "Category C" },
-    Value = { "Category A" },
-    Multi = true,
-    AllowNone = true,
-    Callback = function(option) 
-        print("Categories selected: " ..game:GetService("HttpService"):JSONEncode(option)) 
-    end
-})
-
-local AWPTGL = AWPS:Toggle({
-    Title = "Auto Water Plants",
-    Default = false,
-    Callback = function(state) 
-        print("Toggle Activated" .. tostring(state))
-    end
-})
-
---- Move Plants
-local AMPS = TabPlants:Section({ 
-    Title = "Move Plants",
-    TextXAlignment = "Left",
-    TextSize = 17, -- Default Size
-    Opened = false
-})
-
-local AMPDDM = AMPS:Dropdown({
-    Title = "Select Plants",
-    Values = { "Category A", "Category B", "Category C" },
-    Value = { "Category A" },
-    Multi = true,
-    AllowNone = true,
-    Callback = function(option) 
-        print("Categories selected: " ..game:GetService("HttpService"):JSONEncode(option)) 
-    end
-})
-
-local AMPDD = AMPS:Dropdown({
-    Title = "Position",
-    Values = { "World A", "World B", "World C" },
-    Value = "World A",
-    Callback = function(option) 
-        print("World selected: " .. option) 
-    end
-})
-
-local AMPTGL = AMPS:Toggle({
-    Title = "Auto Move Plants",
-    Default = false,
-    Callback = function(state) 
-        print("Toggle Activated" .. tostring(state))
-    end
-})
-
 --- Auto Shovel Fruits
-local ASFS = TabPlants:Section({ 
+local shovelfruit_sec = TabPlants:Section({ 
     Title = "Auto Shovel Fruits",
     TextXAlignment = "Left",
     TextSize = 17, -- Default Size
     Opened = false
 })
 
-local ASFDDM = ASFS:Dropdown({
+local shovelfruit_ddm = shovelfruit_sec:Dropdown({
     Title = "Select Fruit",
     Values = { "Category A", "Category B", "Category C" },
     Value = { "Category A" },
@@ -323,7 +264,7 @@ local ASFDDM = ASFS:Dropdown({
     end
 })
 
-local ASFDD = ASFS:Dropdown({
+local shovelfruitthresh_dd = shovelfruit_sec:Dropdown({
     Title = "Weight Threshold",
     Values = { "World A", "World B", "World C" },
     Value = "World A",
@@ -332,7 +273,7 @@ local ASFDD = ASFS:Dropdown({
     end
 })
 
-local ASFWINPUT = ASFS:Input({
+local shovelfruit_in = shovelfruit_sec:Input({
     Title = "Weight",
     Placeholder = "e.g 30",
     Value = "",
@@ -342,7 +283,7 @@ local ASFWINPUT = ASFS:Input({
     end
 })
 
-local ASFTGL = ASFS:Toggle({
+local shovelfruit_tgl = shovelfruit_sec:Toggle({
     Title = "Auto Shovel Fruits",
     Default = false,
     Callback = function(state) 
@@ -350,16 +291,16 @@ local ASFTGL = ASFS:Toggle({
     end
 })
 
---- ==== Sprinkler === ---
---- Auto Place Sprinkler
-local APSS = TabSprinkler:Section({ 
-    Title = "Auto Place Sprinkler",
+--- Move Plants
+local moveplant_sec = TabPlants:Section({ 
+    Title = "Move Plants",
     TextXAlignment = "Left",
     TextSize = 17, -- Default Size
+    Opened = false
 })
 
-local APSDDM = TabSprinkler:Dropdown({
-    Title = "Select Sprinkler",
+local moveplant_ddm = moveplant_sec:Dropdown({
+    Title = "Select Plants",
     Values = { "Category A", "Category B", "Category C" },
     Value = { "Category A" },
     Multi = true,
@@ -369,7 +310,7 @@ local APSDDM = TabSprinkler:Dropdown({
     end
 })
 
-local APSDD = TabSprinkler:Dropdown({
+local moveplantpos_dd = moveplant_sec:Dropdown({
     Title = "Position",
     Values = { "World A", "World B", "World C" },
     Value = "World A",
@@ -378,22 +319,78 @@ local APSDD = TabSprinkler:Dropdown({
     end
 })
 
-local APSTGL = TabSprinkler:Toggle({
-    Title = "Auto Place Sprinkler",
+local moveplant_tgl = moveplant_sec:Toggle({
+    Title = "Auto Move Plants",
     Default = false,
     Callback = function(state) 
         print("Toggle Activated" .. tostring(state))
     end
 })
---- Auto Sovel Sprinkler
-local ASSS = TabSprinkler:Section({ 
-    Title = "Auto Sovel Sprinkler",
+
+--- Shovel Plants
+local shovelplant_sec = TabPlants:Section({ 
+    Title = "Auto Shovel Plants",
     TextXAlignment = "Left",
     TextSize = 17, -- Default Size
     Opened = false
 })
 
-local ASSDDM = TabSprinkler:Dropdown({
+local shovelplant_ddm = shovelplant_sec:Dropdown({
+    Title = "Select Plants",
+    Values = { "Category A", "Category B", "Category C" },
+    Value = { "Category A" },
+    Multi = true,
+    AllowNone = true,
+    Callback = function(option) 
+        print("Categories selected: " ..game:GetService("HttpService"):JSONEncode(option)) 
+    end
+})
+
+local shovelplant_tgl = shovelplant_sec:Toggle({
+    Title = "Auto Shovel Plants",
+    Default = false,
+    Callback = function(state) 
+        print("Toggle Activated" .. tostring(state))
+    end
+})
+
+--- Auto Water Plants
+local waterplant_sec = TabPlants:Section({ 
+    Title = "Auto Water Plants",
+    TextXAlignment = "Left",
+    TextSize = 17, -- Default Size
+    Opened = false
+})
+
+local waterplant_dd = waterplant_sec:Dropdown({
+    Title = "Select Plants",
+    Values = { "Category A", "Category B", "Category C" },
+    Value = { "Category A" },
+    Multi = true,
+    AllowNone = true,
+    Callback = function(option) 
+        print("Categories selected: " ..game:GetService("HttpService"):JSONEncode(option)) 
+    end
+})
+
+local waterplant_tgl = waterplant_sec:Toggle({
+    Title = "Auto Water Plants",
+    Default = false,
+    Callback = function(state) 
+        print("Toggle Activated" .. tostring(state))
+    end
+})
+
+
+--- ==== TAB SPRINKLER === ---
+--- Auto Place Sprinkler
+local placesprinkler_sec = TabSprinkler:Section({ 
+    Title = "Auto Place Sprinkler",
+    TextXAlignment = "Left",
+    TextSize = 17, -- Default Size
+})
+
+local placesprinkler_ddm = TabSprinkler:Dropdown({
     Title = "Select Sprinkler",
     Values = { "Category A", "Category B", "Category C" },
     Value = { "Category A" },
@@ -404,7 +401,42 @@ local ASSDDM = TabSprinkler:Dropdown({
     end
 })
 
-local ASSTGL = TabSprinkler:Toggle({
+local placesprinklerpos_dd = TabSprinkler:Dropdown({
+    Title = "Position",
+    Values = { "World A", "World B", "World C" },
+    Value = "World A",
+    Callback = function(option) 
+        print("World selected: " .. option) 
+    end
+})
+
+local placesprinkler_tgl = TabSprinkler:Toggle({
+    Title = "Auto Place Sprinkler",
+    Default = false,
+    Callback = function(state) 
+        print("Toggle Activated" .. tostring(state))
+    end
+})
+--- Auto Sovel Sprinkler
+local shovelsprinkler_sec = TabSprinkler:Section({ 
+    Title = "Auto Sovel Sprinkler",
+    TextXAlignment = "Left",
+    TextSize = 17, -- Default Size
+    Opened = false
+})
+
+local shovelsprinkler_ddm = TabSprinkler:Dropdown({
+    Title = "Select Sprinkler",
+    Values = { "Category A", "Category B", "Category C" },
+    Value = { "Category A" },
+    Multi = true,
+    AllowNone = true,
+    Callback = function(option) 
+        print("Categories selected: " ..game:GetService("HttpService"):JSONEncode(option)) 
+    end
+})
+
+local shovelsprinkler_tgl = TabSprinkler:Toggle({
     Title = "Auto Sovel Sprinkler",
     Default = false,
     Callback = function(state) 
@@ -412,6 +444,117 @@ local ASSTGL = TabSprinkler:Toggle({
     end
 })
 
+--- ==== TAB INVENTORY === ---
+--- Auto Favorite Fruit
+local favfruit_sec = TabInventory:Section({ 
+    Title = "Auto Favorite Fruits",
+    TextXAlignment = "Left",
+    TextSize = 17, -- Default Size
+    Opened = false
+})
+
+local favfruit_ddm = favfruit_sec:Dropdown({
+    Title = "Select Fruits",
+    Values = { "Category A", "Category B", "Category C" },
+    Value = { "Category A" },
+    Multi = true,
+    AllowNone = true,
+    Callback = function(option) 
+        print("Categories selected: " ..game:GetService("HttpService"):JSONEncode(option)) 
+    end
+})
+
+local favmutation_ddm = favfruit_sec:Dropdown({
+    Title = "Whitelist Mutation",
+    Values = { "World A", "World B", "World C" },
+    Value = { "World A" },
+    Multi = true,
+    AllowNone = true,
+    Callback = function(option) 
+        print("Worlds selected: " ..game:GetService("HttpService"):JSONEncode(option)) 
+    end
+})
+
+local favfruit_tgl = favfruit_sec:Toggle({
+    Title = "Auto Favorite Fruit",
+    Default = false,
+    Callback = function(state) 
+        print("Toggle Activated" .. tostring(state))
+    end
+})
+
+--- Auto Favorite Pets
+local favpet_sec = TabInventory:Section({ 
+    Title = "Auto Favorite Pets",
+    TextXAlignment = "Left",
+    TextSize = 17, -- Default Size
+    Opened = false
+})
+
+local favpet_ddm = favpet_sec:Dropdown({
+    Title = "Select Pet",
+    Values = { "Category A", "Category B", "Category C" },
+    Value = { "Category A" },
+    Multi = true,
+    AllowNone = true,
+    Callback = function(option) 
+        print("Categories selected: " ..game:GetService("HttpService"):JSONEncode(option)) 
+    end
+})
+
+local favpet_tgl = favpet_sec:Toggle({
+    Title = "Auto Favorite Pet",
+    Default = false,
+    Callback = function(state) 
+        print("Toggle Activated" .. tostring(state))
+    end
+})
+
+--- Auto Sell Pets
+local sellpet_sec = TabInventory:Section({ 
+    Title = "Auto Favorite Pets",
+    TextXAlignment = "Left",
+    TextSize = 17, -- Default Size
+    Opened = false
+})
+
+local sellpet_ddm = sellpet_sec:Dropdown({
+    Title = "Select Pet",
+    Values = { "Category A", "Category B", "Category C" },
+    Value = { "Category A" },
+    Multi = true,
+    AllowNone = true,
+    Callback = function(option) 
+        print("Categories selected: " ..game:GetService("HttpService"):JSONEncode(option)) 
+    end
+})
+
+local sellpetthresh_dd = sellpet_sec:Dropdown({
+    Title = "Weight Threshold",
+    Values = { "World A", "World B", "World C" },
+    Value = "World A",
+    Callback = function(option) 
+        print("World selected: " .. option) 
+    end
+})
+
+local sellpetweight_in = sellpet_sec:Input({
+    Title = "Weight",
+    Placeholder = "e.g 30",
+    Value = "",
+    Numeric = false,
+    Callback = function(value) 
+        print("Input: " .. tostring(value)) 
+    end
+})
+
+local sellpet_tgl = sellpet_sec:Toggle({
+    Title = "Auto Sell Pet",
+    Default = false,
+    Callback = function(state) 
+        print("Toggle Activated" .. tostring(state))
+    end
+})
 
  --========== LIFECYCLE (tanpa cleanup integrasi) ==========
 if type(Window.OnClose) == "function" then
