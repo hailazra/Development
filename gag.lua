@@ -14,7 +14,7 @@ local Window = WindUI:CreateWindow({
     Theme         = "Dark",
     Resizable     = false,
     SideBarWidth  = 120,
-    HideSearchBar = false,
+    HideSearchBar = true,
 })
 
 WindUI:SetFont("rbxasset://12187366657")
@@ -114,6 +114,10 @@ local TabEgg     = SPetEgg:Tab({ Title = "Egg",     Icon = "egg" })
 local SShopCraft = Window:Section({ Title = "Shop", Icon = "shopping-bag", Opened = false })
 local TabShop    = SShopCraft:Tab({ Title = "Shop",   Icon = "shopping-cart" })
 local TabCraft   = SShopCraft:Tab({ Title = "Craft",  Icon = "settings" })
+-- Misc
+local TabMisc= Window:Section({ Title = "Misc", Icon = "tool" })
+-- Settings
+local TabSettings = Window:Section({ Title = "Settings", Icon = "settings" })
 
 -- === SECTION === --
 -- Home
@@ -1025,6 +1029,138 @@ local craftevent_tgl = craftevent_sec:Toggle({
     end
 })
 
+--- ==== TAB MISC === ---
+--- Server
+local server_sec = TabMisc:Section({ 
+    Title = "Server",
+    TextXAlignment = "Left",
+    TextSize = 17, -- Default Size
+    Opened = false
+})
+
+local serverutils_sec = server_sec:Section({ 
+    Title = "Server Utilities",
+    TextXAlignment = "Left",
+    TextSize = 17, -- Default Size
+})
+
+local serverjoin_in = server_sec:Input({
+    Title = "Job ID
+    Placeholder = "e.g 000-000-000",
+    Value = "",
+    Numeric = false,
+    Callback = function(value) 
+        print("Input: " .. tostring(value)) 
+    end
+})
+
+local serverjoin_btn = server_sec:Button({
+    Title = "Join Server",
+    Desc = "Join server with Job ID above",
+    Locked = false,
+    Callback = function()
+        print("clicked")
+    end
+})
+
+local servercopy_btn = server_sec:Button({
+    Title = "Copy Current Server ID",
+    Desc = "Copy current server Job ID to clipboard",
+    Locked = false,
+    Callback = function()
+        print("clicked")
+    end
+})
+
+local serverrejoin_btn = server_sec:Button({
+    Title = "Rejoin Server",
+    Desc = "Rejoin current server",
+    Locked = false,
+    Callback = function()
+        print("clicked")
+    end
+})
+
+local serverhop_sec = server_sec:Section({ 
+    Title = "Server Hop",
+    TextXAlignment = "Left",
+    TextSize = 17, -- Default Size
+})
+
+local serverhop_in = server_sec:Input({
+    Title = "Server Version",
+    Placeholder = "e.g 1891",
+    Value = "",
+    Numeric = false,
+    Callback = function(value) 
+        print("Input: " .. tostring(value)) 
+    end
+})
+
+local serverhop_tgl = server_sec:Toggle({
+    Title = "Auto Server Hop",
+    Desc = "Automatically hop to desired server version",
+    Default = false,
+    Callback = function(state) 
+        print("Toggle Activated" .. tostring(state))
+    end
+})
+
+--- Webhook
+local webhook_sec = TabMisc:Section({ 
+    Title = "Webhook",
+    TextXAlignment = "Left",
+    TextSize = 17, -- Default Size
+    Opened = false
+})
+
+local webhookurl_in = webhook_sec:Input({
+    Title = "Webhook URL",
+    Placeholder = "e.g https://discord.com/api/webhooks/...",
+    Value = "",
+    Numeric = false,
+    Callback = function(value) 
+        print("Input: " .. tostring(value)) 
+    end
+})
+
+local webhookegg_ddm = webhook_sec:Dropdown({
+    Title = "Select Egg",
+    Values = { "Category A", "Category B", "Category C" },
+    Value = { "Category A" },
+    Multi = true,
+    AllowNone = true,
+    Callback = function(option) 
+        print("Categories selected: " ..game:GetService("HttpService"):JSONEncode(option)) 
+    end
+})
+
+local webhookthreshegg_dd = webhook_sec:Dropdown({
+    Title = "Weight Threshold",
+    Values = { "World A", "World B", "World C" },
+    Value = "World A",
+    Callback = function(option) 
+        print("World selected: " .. option) 
+    end
+})
+
+local webhookweightegg_in = webhook_sec:Input({
+    Title = "Weight",
+    Placeholder = "e.g 30",
+    Value = "",
+    Numeric = false,
+    Callback = function(value) 
+        print("Input: " .. tostring(value)) 
+    end
+})
+
+local webhookegg_tgl = webhook_sec:Toggle({
+    Title = "Webhook Egg",
+    Default = false,
+    Callback = function(state) 
+        print("Toggle Activated" .. tostring(state))
+    end
+})
 
  --========== LIFECYCLE (tanpa cleanup integrasi) ==========
 if type(Window.OnClose) == "function" then
