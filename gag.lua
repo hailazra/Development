@@ -768,6 +768,264 @@ local hatchegg_tgl = TabEgg:Toggle({
     end
 })
 
+---- ==== TAB SHOP & CRAFT === ---
+---- ==== SHOP === ---
+--- Seed
+local shopseed_sec = TabShop:Section({ 
+    Title = "Seeds",
+    TextXAlignment = "Left",
+    TextSize = 17, -- Default Size
+    Opened = false
+})
+
+local shopseed_ddm = shopseed_sec:Dropdown({
+    Title = "Select Seeds",
+    Values = { "Category A", "Category B", "Category C" },
+    Value = { "Category A" },
+    Multi = true,
+    AllowNone = true,
+    Callback = function(option) 
+        print("Categories selected: " ..game:GetService("HttpService"):JSONEncode(option)) 
+    end
+})
+
+local shopseed_tgl = shopseed_sec:Toggle({
+    Title = "Auto Buy Seeds",
+    Default = false,
+    Callback = function(state) 
+        print("Toggle Activated" .. tostring(state))
+    end
+})
+
+--- Gear
+local shopgear_sec = TabShop:Section({ 
+    Title = "Gears",
+    TextXAlignment = "Left",
+    TextSize = 17, -- Default Size
+    Opened = false
+})
+
+local shopgear_ddm = shopgear_sec:Dropdown({
+    Title = "Select Gears",
+    Values = { "Category A", "Category B", "Category C" },
+    Value = { "Category A" },
+    Multi = true,
+    AllowNone = true,
+    Callback = function(option) 
+        print("Categories selected: " ..game:GetService("HttpService"):JSONEncode(option)) 
+    end
+})
+
+local shopgear_tgl = shopgear_sec:Toggle({
+    Title = "Auto Buy Gears",
+    Default = false,
+    Callback = function(state) 
+         print("Toggle Activated" .. tostring(state))
+    end
+})
+
+--- Egg
+local shopegg_sec = TabShop:Section({ 
+    Title = "Eggs",
+    TextXAlignment = "Left",
+    TextSize = 17, -- Default Size
+    Opened = false
+})
+
+local shopegg_ddm = shopegg_sec:Dropdown({
+    Title = "Select Eggs",
+    Values = { "Category A", "Category B", "Category C" },
+    Value = { "Category A" },
+    Multi = true,
+    AllowNone = true,
+    Callback = function(option) 
+        print("Categories selected: " ..game:GetService("HttpService"):JSONEncode(option)) 
+    end
+})
+
+local shopegg_tgl = shopegg_sec:Toggle({
+    Title = "Auto Buy Eggs",
+    Default = false,
+    Callback = function(state) 
+        print("Toggle Activated" .. tostring(state))
+    end
+})
+
+--- Cosmetic
+local shopcosmetic_sec = TabShop:Section({ 
+    Title = "Cosmetics",
+    TextXAlignment = "Left",
+    TextSize = 17, -- Default Size
+    Opened = false
+})
+
+local shopcosmetic_ddm = shopcosmetic_sec:Dropdown({
+    Title = "Select Cosmetics",
+    Values = { "Category A", "Category B", "Category C" },
+    Value = { "Category A" },
+    Multi = true,
+    AllowNone = true,
+    Callback = function(option) 
+        print("Categories selected: " ..game:GetService("HttpService"):JSONEncode(option)) 
+    end
+})
+
+local shopcosmetic_tgl = shopcosmetic_sec:Toggle({
+    Title = "Auto Buy Cosmetics",
+    Default = false,
+    Callback = function(state) 
+        print("Toggle Activated" .. tostring(state))
+    end
+})
+
+--- Merchant
+local shopmerchant_sec = TabShop:Section({ 
+    Title = "Merchant",
+    TextXAlignment = "Left",
+    TextSize = 17, -- Default Size
+    Opened = false
+})
+
+local shopmerchanselect_dd = shopmerchant_sec:Dropdown({
+    Title = "Select Merchant",
+    Values = { "Category A", "Category B", "Category C" },
+    Value = { "Category A" },
+    Multi = true,
+    AllowNone = true,
+    Callback = function(option) 
+        print("Categories selected: " ..game:GetService("HttpService"):JSONEncode(option)) 
+    end
+})
+
+local shopmerchant_ddm = shopmerchant_sec:Dropdown({
+    Title = "Select Items",
+    Values = { "Category A", "Category B", "Category C" },
+    Value = { "Category A" },
+    Multi = true,
+    AllowNone = true,
+    Callback = function(option) 
+        print("Categories selected: " ..game:GetService("HttpService"):JSONEncode(option)) 
+    end
+})
+
+local shopmerchant_tgl = shopmerchant_sec:Toggle({
+    Title = "Auto Buy Merchant Items",
+    Default = false,
+    Callback = function(state) 
+        print("Toggle Activated" .. tostring(state))
+    end
+})
+
+---- Event
+local shopevent_sec = TabShop:Section({ 
+    Title = "Event",
+    TextXAlignment = "Left",
+    TextSize = 17, -- Default Size
+    Opened = false
+})
+
+local shopevent_ddm = shopevent_sec:Dropdown({
+    Title = "Select Event Items",
+    Values = { "Category A", "Category B", "Category C" },
+    Value = { "Category A" },
+    Multi = true,
+    AllowNone = true,
+    Callback = function(option) 
+        print("Categories selected: " ..game:GetService("HttpService"):JSONEncode(option)) 
+    end
+})
+
+local shopevent_tgl = shopevent_sec:Toggle({
+    Title = "Auto Buy Event Items",
+    Default = false,
+    Callback = function(state) 
+        print("Toggle Activated" .. tostring(state))
+    end
+})
+
+--- ==== CRAFT === ---
+--- Gear
+local craftgear_sec = TabCraft:Section({ 
+    Title = "Gears",
+    TextXAlignment = "Left",
+    TextSize = 17, -- Default Size
+    Opened = false
+})
+
+local craftgear_ddm = craftgear_sec:Dropdown({
+    Title = "Select Gears",
+    Values = { "Category A", "Category B", "Category C" },
+    Value = { "Category A" },
+    Multi = true,
+    AllowNone = true,
+    Callback = function(option) 
+        print("Categories selected: " ..game:GetService("HttpService"):JSONEncode(option)) 
+    end
+})
+
+local craftgear_tgl = craftgear_sec:Toggle({
+    Title = "Auto Craft Gears",
+    Default = false,
+    Callback = function(state) 
+        print("Toggle Activated" .. tostring(state))
+    end
+})
+
+--- Seed
+local craftseed_sec = TabCraft:Section({ 
+    Title = "Seeds",
+    TextXAlignment = "Left",
+    TextSize = 17, -- Default Size
+    Opened = false
+})
+
+local craftseed_ddm = craftseed_sec:Dropdown({
+    Title = "Select Seeds",
+    Values = { "Category A", "Category B", "Category C" },
+    Value = { "Category A" },
+    Multi = true,
+    AllowNone = true,
+    Callback = function(option) 
+        print("Categories selected: " ..game:GetService("HttpService"):JSONEncode(option)) 
+    end
+})
+
+local craftseed_tgl = craftseed_sec:Toggle({
+    Title = "Auto Craft Seeds",
+    Default = false,
+    Callback = function(state) 
+        print("Toggle Activated" .. tostring(state))
+    end
+})
+
+--- Event
+local craftevent_sec = TabCraft:Section({ 
+    Title = "Event",
+    TextXAlignment = "Left",
+    TextSize = 17, -- Default Size
+    Opened = false
+})
+
+local craftevent_ddm = craftevent_sec:Dropdown({
+    Title = "Select Event Items",
+    Values = { "Category A", "Category B", "Category C" },
+    Value = { "Category A" },
+    Multi = true,
+    AllowNone = true,
+    Callback = function(option) 
+        print("Categories selected: " ..game:GetService("HttpService"):JSONEncode(option)) 
+    end
+})
+
+local craftevent_tgl = craftevent_sec:Toggle({
+    Title = "Auto Craft Event Items",
+    Default = false,
+    Callback = function(state) 
+        print("Toggle Activated" .. tostring(state))
+    end
+})
+
+
  --========== LIFECYCLE (tanpa cleanup integrasi) ==========
 if type(Window.OnClose) == "function" then
     Window:OnClose(function()
