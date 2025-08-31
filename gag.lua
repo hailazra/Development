@@ -115,9 +115,9 @@ local SShopCraft = Window:Section({ Title = "Shop", Icon = "shopping-bag", Opene
 local TabShop    = SShopCraft:Tab({ Title = "Shop",   Icon = "shopping-cart" })
 local TabCraft   = SShopCraft:Tab({ Title = "Craft",  Icon = "settings" })
 -- Misc
-local TabMisc= Window:Section({ Title = "Misc", Icon = "tool" })
+local TabMisc   = Window:Tab({ Title = "Misc", Icon = "house" }) 
 -- Settings
-local TabSettings = Window:Section({ Title = "Settings", Icon = "settings" })
+local TabSettings = Window:Tab({ Title = "Settings", Icon = "settings" })
 
 -- === SECTION === --
 -- Home
@@ -1031,20 +1031,20 @@ local craftevent_tgl = craftevent_sec:Toggle({
 
 --- ==== TAB MISC === ---
 --- Server
-local server_sec = TabMisc:Section({ 
+local servermisc_sec = TabMisc:Section({
     Title = "Server",
     TextXAlignment = "Left",
     TextSize = 17, -- Default Size
     Opened = false
 })
 
-local serverutils_sec = server_sec:Section({ 
+local serverutils_sec = servermisc_sec:Section({
     Title = "Server Utilities",
     TextXAlignment = "Left",
     TextSize = 17, -- Default Size
 })
 
-local serverjoin_in = server_sec:Input({
+local serverjoin_in = servermisc_sec:Input({
     Title = "Job ID
     Placeholder = "e.g 000-000-000",
     Value = "",
@@ -1054,7 +1054,7 @@ local serverjoin_in = server_sec:Input({
     end
 })
 
-local serverjoin_btn = server_sec:Button({
+local serverjoin_btn = servermisc_sec:Button({
     Title = "Join Server",
     Desc = "Join server with Job ID above",
     Locked = false,
@@ -1063,7 +1063,7 @@ local serverjoin_btn = server_sec:Button({
     end
 })
 
-local servercopy_btn = server_sec:Button({
+local servercopy_btn = servermisc_sec:Button({
     Title = "Copy Current Server ID",
     Desc = "Copy current server Job ID to clipboard",
     Locked = false,
@@ -1072,7 +1072,7 @@ local servercopy_btn = server_sec:Button({
     end
 })
 
-local serverrejoin_btn = server_sec:Button({
+local serverrejoin_btn = servermisc_sec:Button({
     Title = "Rejoin Server",
     Desc = "Rejoin current server",
     Locked = false,
@@ -1081,13 +1081,13 @@ local serverrejoin_btn = server_sec:Button({
     end
 })
 
-local serverhop_sec = server_sec:Section({ 
+local serverhop_sec = servermisc_sec:Section({
     Title = "Server Hop",
     TextXAlignment = "Left",
     TextSize = 17, -- Default Size
 })
 
-local serverhop_in = server_sec:Input({
+local serverhop_in = servermisc_sec:Input({
     Title = "Server Version",
     Placeholder = "e.g 1891",
     Value = "",
@@ -1097,7 +1097,7 @@ local serverhop_in = server_sec:Input({
     end
 })
 
-local serverhop_tgl = server_sec:Toggle({
+local serverhop_tgl = servermisc_sec:Toggle({
     Title = "Auto Server Hop",
     Desc = "Automatically hop to desired server version",
     Default = false,
@@ -1116,7 +1116,7 @@ local webhook_sec = TabMisc:Section({
 
 local webhookurl_in = webhook_sec:Input({
     Title = "Webhook URL",
-    Placeholder = "e.g https://discord.com/api/webhooks/...",
+    Placeholder = "e.g discprd.com/api/webhooks/000/xxxx",
     Value = "",
     Numeric = false,
     Callback = function(value) 
