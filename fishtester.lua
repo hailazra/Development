@@ -77,6 +77,45 @@ end
 -- name, icon, callback, order
 Window:CreateTopbarButton("changelog", "newspaper", ShowChangelog, 995)
 
+-- === Module Loader Registry (tempel SEKALI) ===
+getgenv().Modules = getgenv().Modules or {}
+
+local function ensureModule(key, url)
+    if not getgenv().Modules[key] then
+        local ok, mod = pcall(function()
+            return loadstring(game:HttpGet(url))()
+        end)
+        if not ok then
+            warn(("[GUI] Load module '%s' failed: %s"):format(key, tostring(mod)))
+            return nil
+        end
+        getgenv().Modules[key] = mod
+    end
+    return getgenv().Modules[key]
+end
+
+local function killModule(key)
+    local M = getgenv().Modules[key]
+    if M and type(M.Kill) == "function" then
+        local ok, err = pcall(M.Kill)
+        if not ok then warn("[GUI] Kill error:", err) end
+    end
+end
+
+local function reloadModule(key, url, onReady)
+    killModule(key)
+    getgenv().Modules[key] = nil
+    local M = ensureModule(key, url)
+    if M and onReady then onReady(M) end
+end
+
+-- === Raw URLs modul fitur ===
+local URLS = {
+    FISH = "https://raw.githubusercontent.com/hailazra/Development/refs/heads/main/fishitfeatures.lua",
+    -- Nanti tambah: PLACE=..., SELL=..., dst
+}
+
+
 -- helper ambil value kontrol yg compatible (tanpa integrasi apapun)
 local function getValue(ctrl)
     if ctrl == nil then return nil end
@@ -139,17 +178,56 @@ local autofishmode_dd = TabMain:Dropdown({
     Title = "Fishing Mode",
     Values = { "Category A", "Category B", "Category C" },
     Value = "Category A",
-    Callback = function(option) 
-        print("Category selected: " .. option) 
+   Callback = function(option)
+    -- simpan mode ke config global (boleh bikin simpel dulu)
+    getgenv().LogicCFG = getgenv().LogicCFG or { Fishing = { Mode = "Category A", Auto = false } }
+    getgenv().LogicCFG.Fishing.Mode = option
+
+    -- kalau modul sudah diload & punya SetMode, update langsung
+    local M = getgenv().Modules and getgenv().Modules.Fish
+    if M and type(M.SetMode) == "function" then
+        M.SetMode(option)
     end
+end
 })
     
 local autofish_tgl = TabMain:Toggle({
     Title = "Auto Fishing",
     Default = false,
-    Callback = function(state) 
-        print("Toggle Activated" .. tostring(state))
+    Callback = function(state)
+    -- pastikan ada config global
+    getgenv().LogicCFG = getgenv().LogicCFG or { Fishing = { Mode = "Category A", Auto = false } }
+    getgenv().LogicCFG.Fishing.Auto = state
+
+    -- fungsi bantu: start modul dengan mode terbaru
+    local function startFish(M)
+        if type(M.SetMode) == "function" then
+            M.SetMode(getgenv().LogicCFG.Fishing.Mode)
+        end
+        if type(M.Start) == "function" then
+            M.Start(getgenv().LogicCFG.Fishing)
+        else
+            warn("[GUI] Fish module missing Start()")
+        end
     end
+
+    if state then
+        -- load modul dari GitHub kalau belum ada
+        local M = ensureModule("Fish", URLS.FISH)
+        if not M then
+            -- kalau gagal load, balikin toggle OFF biar sinkron
+            if autofish_tgl and autofish_tgl.SetValue then
+                autofish_tgl:SetValue(false)
+            end
+            getgenv().LogicCFG.Fishing.Auto = false
+            return
+        end
+        startFish(M)
+    else
+        -- matikan modul saat toggle OFF
+        killModule("Fish")
+    end
+end
 })
 
 --- Event Teleport
