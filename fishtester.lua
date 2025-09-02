@@ -99,44 +99,52 @@ end
 --========== TABS ==========
  TabHome     = Window:Tab({ Title = "Home",     Icon = "house" })
  TabMain     = Window:Tab({ Title = "Main",     Icon = "gamepad" })
+ TabBackpack = Window:Tab({ Title = "Backpack", Icon = "bag" })
  TabShop     = Window:Tab({ Title = "Shop",     Icon = "shopping-bag" })
  TabTeleport = Window:Tab({ Title = "Teleport", Icon = "map" })
  TabMisc     = Window:Tab({ Title = "Misc",     Icon = "cog" })
 
---- Home
+--- === Home === ---
 local DLsec = TabHome:Section({ 
     Title = ".devlogic",
     TextXAlignment = "Left",
     TextSize = 17, -- Default Size
 })
 
---- Main
-local FishSec = TabMain:Section({ 
+local AboutUs = TabHome:Paragraph({
+    Title = "About Us",
+    Desc = "This script still under development, please report any bugs or issues in our discord server.",
+    Color = "Red",
+    ImageSize = 30,})
+
+local DiscordBtn = TabHome:Button({
+    Title = ".devlogic Discord",
+    Icon  = "message-circle",
+    Callback = function()
+        if setclipboard then
+            setclipboard("https://discord.gg/3AzvRJFT3M") -- ganti invite kamu
+        end
+    end
+})
+
+--- === Main === ---
+--- Auto Fish
+local autofish_sec = TabMain:Section({ 
     Title = "Fishing",
     TextXAlignment = "Left",
     TextSize = 17, -- Default Size
 })
 
-local InputDelay = TabMain:Input({
-    Title = "Cast Delay",
-    Desc = "Delay to Cast",
-    Value = "",
-    Placeholder = "Enter delay",
-    Type = "Input", 
-    Callback = function(input) 
-        print("delay entered: " .. input)
-    end
-})
-
-local ToggleCast = TabMain:Toggle({
-    Title = "Auto Cast",
-    Default = false,
-    Callback = function(state) 
-        print("Toggle Activated" .. tostring(state))
+local autofishmode_dd = TabMain:Dropdown({
+    Title = "Fishing Mode",
+    Values = { "Category A", "Category B", "Category C" },
+    Value = "Category A",
+    Callback = function(option) 
+        print("Category selected: " .. option) 
     end
 })
     
-local AutoFish = TabMain:Toggle({
+local autofish_tgl = TabMain:Toggle({
     Title = "Auto Fishing",
     Default = false,
     Callback = function(state) 
@@ -144,21 +152,31 @@ local AutoFish = TabMain:Toggle({
     end
 })
 
-local InstantFish = TabMain:Toggle({
-    Title = "Instant Fish",
+--- Event Teleport
+local eventtele_sec = TabMain:Section({ 
+    Title = "Event Teleport",
+    TextXAlignment = "Left",
+    TextSize = 17, -- Default Size
+})
+
+local eventtele_tgl = TabMain:Toggle({
+    Title = "Auto Event Teleport",
+    Desc  = "Auto Teleport to Event when available",
     Default = false,
     Callback = function(state) 
         print("Toggle Activated" .. tostring(state))
     end
 })
 
-local FavSec = TabMain:Section({ 
+--- === Backpack === ---
+--- Favorite Fish
+local favfish_sec = TabBackpack:Section({ 
     Title = "Favorite Fish",
     TextXAlignment = "Left",
     TextSize = 17, -- Default Size
 })
 
-local DdFavFish = TabMain:Dropdown({
+local favfish_ddm = TabBackpack:Dropdown({
     Title = "Select Fish",
     Values = { "Category A", "Category B", "Category C" },
     Value = { "Category A" },
@@ -169,7 +187,7 @@ local DdFavFish = TabMain:Dropdown({
     end
 })
 
-local FavFish = TabMain:Toggle({
+local favfish_tgl = TabBackpack:Toggle({
     Title = "Auto Favorite Fish",
     Default = false,
     Callback = function(state) 
@@ -177,41 +195,51 @@ local FavFish = TabMain:Toggle({
     end
 })
 
-local SellSec = TabMain:Section({ 
+--- Sell Fish
+local sellfish_sec = TabBackpack:Section({ 
     Title = "Sell Fish",
     TextXAlignment = "Left",
     TextSize = 17, -- Default Size
 })
 
-local SliderSell = TabMain:Slider({
-    Title = "Backpack Capacity",
-    Step = 1,
-    Desc = "CUstom backpack capacity to sell",
-    Value = {
-        Min = 1,
-        Max = 5000,
-        Default =1000,
-    },
-    Callback = function(value)
-        print(value)
+local sellfish_ddm = TabBackpack:Dropdown({
+    Title = "Select Fish",
+    Values = { "Category A", "Category B", "Category C" },
+    Value = { "Category A" },
+    Multi = true,
+    AllowNone = true,
+    Callback = function(option) 
+        print("Categories selected: " ..game:GetService("HttpService"):JSONEncode(option)) 
     end
 })
 
-local AutoSell = TabMain:Toggle({
+local sellfish_in = TabBackpack:Input({
+    Title = "Sell Limit",
+    Placeholder = "e.g 3",
+    Value = "",
+    Numeric = true,
+    Callback = function(value) 
+        print("Input: " .. tostring(value)) 
+    end
+})
+
+local sellfish_tgl = TabBackpack:Toggle({
     Title = "Auto Sell",
+    Desc = "Auto Sell when reach limit",
     Default = false,
     Callback = function(state) 
         print("Toggle Activated" .. tostring(state))
     end
 })
 
-local GiftSec = TabMain:Section({ 
-    Title = "Gift Fish",
+--- Gift Fish
+local autogift_sec = TabBackpack:Section({ 
+    Title = "Auto Gift",
     TextXAlignment = "Left",
     TextSize = 17, -- Default Size
 })
 
-local DdGift = TabMain:Dropdown({
+local autogiftplayer_dd = TabBackpack:Dropdown({
     Title = "Select Player",
     Values = { "Category A", "Category B", "Category C" },
     Value = "Category A",
@@ -220,23 +248,24 @@ local DdGift = TabMain:Dropdown({
     end
 })
 
-local GiftFish = TabMain:Toggle({
+local autogift_tgl = TabBackpack:Toggle({
     Title = "Auto Gift Fish",
-    Desc  = "Auto Gift held Fish",
+    Desc  = "Auto Gift held Fish/Item",
     Default = false,
     Callback = function(state) 
         print("Toggle Activated" .. tostring(state))
     end
 })
 
---- Shop
-local ShopSecItem = TabShop:Section({ 
+--- === Shop === --- 
+--- Item
+local shopitem_sec = TabShop:Section({ 
     Title = "Rod & Item",
     TextXAlignment = "Left",
     TextSize = 17, -- Default Size
 })
 
-local DdBuyRod = TabShop:Dropdown({
+local shopitemrod_ddm = TabShop:Dropdown({
     Title = "Select Rod",
     Values = { "Category A", "Category B", "Category C" },
     Value = { "Category A" },
@@ -247,7 +276,7 @@ local DdBuyRod = TabShop:Dropdown({
     end
 })
 
-local BuyRodBtn = TabShop:Button({
+local shopitemrod_tgl = TabShop:Button({
     Title = "Buy Rod",
     Desc = "",
     Locked = false,
@@ -256,7 +285,7 @@ local BuyRodBtn = TabShop:Button({
     end
 })
 
-local DdBuyItem = TabShop:Dropdown({
+local shopitemitem_ddm = TabShop:Dropdown({
     Title = "Select Item",
     Values = { "Category A", "Category B", "Category C" },
     Value = { "Category A" },
@@ -267,7 +296,7 @@ local DdBuyItem = TabShop:Dropdown({
     end
 })
 
-local InputItemQty = TabShop:Input({
+local shopitemitem_in = TabShop:Input({
     Title = "Quantity",
     Desc = "Item Quantity",
     Value = "",
@@ -278,7 +307,7 @@ local InputItemQty = TabShop:Input({
     end
 })
 
-local BuyItemBtn = TabShop:Button({
+local shopitemitem_btn = TabShop:Button({
     Title = "Buy Item",
     Desc = "",
     Locked = false,
@@ -287,22 +316,25 @@ local BuyItemBtn = TabShop:Button({
     end
 })
 
-local ShopSecWeather = TabShop:Section({ 
+--- Weather
+local shopweather_sec = TabShop:Section({ 
     Title = "Weather",
     TextXAlignment = "Left",
     TextSize = 17, -- Default Size
 })
 
-local DdWeather = TabShop:Dropdown({
+local shopweather_ddm = TabShop:Dropdown({
     Title = "Select Weather",
     Values = { "Category A", "Category B", "Category C" },
-    Value = "Category A",
+    Value = { "Category A" },
+    Multi = true,
+    AllowNone = true,
     Callback = function(option) 
-        print("Category selected: " .. option) 
+        print("Categories selected: " ..game:GetService("HttpService"):JSONEncode(option)) 
     end
 })
 
-local BuyWeatherTgl = TabShop:Toggle({
+local shopweather_tgl = TabShop:Toggle({
     Title = "Auto Buy Weather",
     Default = false,
     Callback = function(state) 
@@ -310,14 +342,14 @@ local BuyWeatherTgl = TabShop:Toggle({
     end
 })
 
---- Teleport
-local TeleIslandSec = TabTeleport:Section({ 
+--- === Teleport === ---
+local teleisland_sec = TabTeleport:Section({ 
     Title = "Islands",
     TextXAlignment = "Left",
     TextSize = 17, -- Default Size
 })
 
-local DdIsland = TabTeleport:Dropdown({
+local teleisland_dd = TabTeleport:Dropdown({
     Title = "Select Island",
     Values = { "Category A", "Category B", "Category C" },
     Value = "Category A",
@@ -326,7 +358,7 @@ local DdIsland = TabTeleport:Dropdown({
     end
 })
 
-local IslandBtn = TabTeleport:Button({
+local teleisland_btn = TabTeleport:Button({
     Title = "Teleport To Island",
     Desc = "",
     Locked = false,
@@ -335,13 +367,13 @@ local IslandBtn = TabTeleport:Button({
     end
 })
 
-local TelePlayerSec = TabTeleport:Section({ 
+local teleplayer_sec = TabTeleport:Section({ 
     Title = "Players",
     TextXAlignment = "Left",
     TextSize = 17, -- Default Size
 })
 
-local DdPlayer = TabTeleport:Dropdown({
+local teleplayer_dd = TabTeleport:Dropdown({
     Title = "Select Player",
     Values = { "Category A", "Category B", "Category C" },
     Value = "Category A",
@@ -350,7 +382,7 @@ local DdPlayer = TabTeleport:Dropdown({
     end
 })
 
-local PlayerBtn = TabTeleport:Button({
+local teleplayer_btn = TabTeleport:Button({
     Title = "Teleport To Player",
     Desc = "",
     Locked = false,
@@ -359,14 +391,15 @@ local PlayerBtn = TabTeleport:Button({
     end
 })
 
---- Misc
-local ServerSec = TabMisc:Section({ 
+--- === Misc === ---
+--- Server
+local servutils_sec = TabMisc:Section({ 
     Title = "Join Server",
     TextXAlignment = "Left",
     TextSize = 17, -- Default Size
 })
 
-local InputJobid = TabMisc:Input({
+local servjoin_in = TabMisc:Input({
     Title = "Job Id",
     Desc = "Input Server Job Id",
     Value = "",
@@ -377,7 +410,7 @@ local InputJobid = TabMisc:Input({
     end
 })
 
-local JoinJobid = TabMisc:Button({
+local servjoin_btn = TabMisc:Button({
     Title = "Join Server",
     Desc = "",
     Locked = false,
@@ -386,13 +419,23 @@ local JoinJobid = TabMisc:Button({
     end
 })
 
-local HopServerSec = TabMisc:Section({ 
+local servcopy_btn = TabMisc:Button({
+    Title = "Copy Server ID",
+    Desc = "Copy Current Server Job ID",
+    Locked = false,
+    Callback = function()
+        print("clicked")
+    end
+})
+
+--- Server Hop
+local servhop_sec = TabMisc:Section({ 
     Title = "Hop Server",
     TextXAlignment = "Left",
     TextSize = 17, -- Default Size
 })
 
-local DdServerHop = TabMisc:Dropdown({
+local servhop_dd = TabMisc:Dropdown({
     Title = "Select Server Luck",
     Values = { "Category A", "Category B", "Category C" },
     Value = "Category A",
@@ -401,7 +444,7 @@ local DdServerHop = TabMisc:Dropdown({
     end
 })
 
-local HopServerTgl = TabMisc:Toggle({
+local servhop_tgl = TabMisc:Toggle({
     Title = "Auto Hop Server",
     Desc  = "Auto Hop until found desired Server",
     Default = false,
@@ -410,13 +453,15 @@ local HopServerTgl = TabMisc:Toggle({
     end
 })
 
-local WebhookSec = TabMisc:Section({ 
+
+--- Webhook
+local webhookfish_sec = TabMisc:Section({ 
     Title = "Webhook",
     TextXAlignment = "Left",
     TextSize = 17, -- Default Size
 })
 
-local WebhookUrl = TabMisc:Input({
+local webhookfish_in = TabMisc:Input({
     Title = "Webhook URL",
     Desc = "Input Webhook URL",
     Value = "",
@@ -427,7 +472,7 @@ local WebhookUrl = TabMisc:Input({
     end
 })
 
-local DdWebhook = TabMisc:Dropdown({
+local webhookfish_dd = TabMisc:Dropdown({
     Title = "Select Fish",
     Values = { "Category A", "Category B", "Category C" },
     Value = { "Category A" },
@@ -438,7 +483,7 @@ local DdWebhook = TabMisc:Dropdown({
     end
 })
 
-local WebhookTgl = TabMisc:Toggle({
+local webhookfish_tgl = TabMisc:Toggle({
     Title = "Webhook",
     Default = false,
     Callback = function(state) 
