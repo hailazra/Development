@@ -1029,6 +1029,53 @@ local craftevent_tgl = craftevent_sec:Toggle({
     end
 })
 
+--- ==== TAB MISC === ---
+--- Server Utils
+local servutils_sec = TabMisc:Section({ 
+    Title = "Server Utils",
+    TextXAlignment = "Left",
+    TextSize = 17, -- Default Size
+    Opened = true
+})
+
+local servjoin_in = servutils_sec:Input({
+    Title = "Job ID",
+    Placeholder = "e.g 0000-000-000",
+    Value = "",
+    Callback = function(value) 
+        print("Input: " .. tostring(value)) 
+    end
+})
+
+local servjoin_btn = servutils_sec:Button({
+    Title = "Join Server",
+    Desc = "Join Server by Job ID",
+    Locked = false,
+    Callback = function()
+        print("clicked")
+    end
+})
+
+local servcopy_btn = servutils_sec:Button({
+    Title = "Copy Server ID",
+    Desc = "Copy Current Server Job ID",
+    Locked = false,
+    Callback = function()
+        print("clicked")
+    end
+})
+
+local servrejoin_btn = servutils_sec:Button({
+    Title = "Rejoin Server",
+    Desc = "Rejoin Current Server",
+    Locked = false,
+    Callback = function()
+        print("clicked")
+    end
+})
+
+
+
 
  --========== LIFECYCLE (tanpa cleanup integrasi) ==========
 if type(Window.OnClose) == "function" then
