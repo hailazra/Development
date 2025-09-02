@@ -69,36 +69,43 @@ end
 
 -- ======= Game Helpers (SESUIKAN DENGAN GAME KAMU) =======
 local function EquipRod()
-    if RE.ERod then
-        safe(function()
-            RE.Rod:FireServer((1))
+    if RE.Rod then
+        local ok = safe(function()
+            -- NOTE: argumen (1) = slot hotbar. Ubah kalau game kamu pakai format lain.
+            RE.Rod:FireServer(1)
         end)
-    -- Return true kalau rod sudah ke-equip
-    return true
+        return ok
+    else
+        warn(TAG, "RE/EquipToolFromHotbar tidak ditemukan. Cek path/net.")
+    end
+    return false
 end
 
 local function DoCharge()
-    -- Contoh RF call (samakan argumen)
-    -- local args = { tick() }  -- placeholder
     if RF.Charge then
-        safe(function()
+        local ok = safe(function()
+            -- Banyak game minta timestamp/float; sesuaikan kalau perlu.
             RF.Charge:InvokeServer(tick())
         end)
-        return true
+        return ok
+    else
+        warn(TAG, "RF/ChargeFishingRod tidak ditemukan. Cek path/net.")
     end
     return false
 end
 
 local function DoMinigame()
-    -- Otomasi minigame (placeholder)
     if RF.MiniGame then
-        safe(function()
-            RF.MiniGame:InvokeServer() -- sesuaikan args
+        local ok = safe(function()
+            RF.MiniGame:InvokeServer() -- SESUAIKAN argumen jika perlu
         end)
-        return true
+        return ok
+    else
+        warn(TAG, "RF/RequestFishingMin(igame) tidak ditemukan. Cek path/net.")
     end
     return false
 end
+
 
 local function StrategyStep(mode)
     -- Mapping strategi per mode (kamu bisa pecah per fungsi)
