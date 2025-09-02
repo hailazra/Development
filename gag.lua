@@ -721,7 +721,7 @@ local placeeggslot_in = TabEgg:Input({
     Title = "Max Egg Slot",
     Placeholder = "e.g 3",
     Value = "Input number of your egg slot",
-    Numeric = false,
+    Numeric =true,
     Callback = function(value) 
         print("Input: " .. tostring(value)) 
     end
@@ -1032,7 +1032,7 @@ local craftevent_tgl = craftevent_sec:Toggle({
 --- ==== TAB MISC === ---
 --- Server Utils
 local servutils_sec = TabMisc:Section({ 
-    Title = "Server Utils",
+    Title = "Serve",
     TextXAlignment = "Left",
     TextSize = 17, -- Default Size
     Opened = true
@@ -1074,8 +1074,31 @@ local servrejoin_btn = servutils_sec:Button({
     end
 })
 
+local servhop_sec = servutils_sec:Section({ 
+    Title = "Server Hop",
+    TextXAlignment = "Left",
+    TextSize = 17, -- Default Size
+    Opened = false
+})
 
+local servhop_in = servhop_sec:Input({
+    Title = "Server Version",
+    Placeholder = "e.g 1819",
+    Value = "",
+    Numeric = false,
+    Callback = function(value) 
+        print("Input: " .. tostring(value)) 
+    end
+})
 
+local servhop_tgl = servhop_sec:Toggle({
+    Title = "Auto Server Hop",
+    Desc = "Auto Server Hop until found desired server version",
+    Default = false,
+    Callback = function(state) 
+        print("Toggle Activated" .. tostring(state))
+    end
+})
 
  --========== LIFECYCLE (tanpa cleanup integrasi) ==========
 if type(Window.OnClose) == "function" then
