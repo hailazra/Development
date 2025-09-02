@@ -1032,7 +1032,7 @@ local craftevent_tgl = craftevent_sec:Toggle({
 --- ==== TAB MISC === ---
 --- Server Utils
 local servutils_sec = TabMisc:Section({ 
-    Title = "Serve",
+    Title = "Server",
     TextXAlignment = "Left",
     TextSize = 17, -- Default Size
     Opened = true
@@ -1074,7 +1074,9 @@ local servrejoin_btn = servutils_sec:Button({
     end
 })
 
-local servhop_sec = servutils_sec:Section({ 
+
+--- Server Hop
+local servhop_sec = TabMisc:Section({ 
     Title = "Server Hop",
     TextXAlignment = "Left",
     TextSize = 17, -- Default Size
@@ -1094,6 +1096,62 @@ local servhop_in = servhop_sec:Input({
 local servhop_tgl = servhop_sec:Toggle({
     Title = "Auto Server Hop",
     Desc = "Auto Server Hop until found desired server version",
+    Default = false,
+    Callback = function(state) 
+        print("Toggle Activated" .. tostring(state))
+    end
+})
+
+--- Webhook
+local webhook_sec = TabMisc:Section({ 
+    Title = "Discord Webhook",
+    TextXAlignment = "Left",
+    TextSize = 17, -- Default Size
+    Opened = false
+})
+
+local webhook_in = webhook_sec:Input({
+    Title = "Webhook URL",
+    Placeholder = "e.g https://discord.com/api/webhooks/...",
+    Value = "",
+    Numeric = false,
+    Callback = function(value) 
+        print("Input: " .. tostring(value)) 
+    end
+})
+
+local webhookhatch_ddm = webhook_sec:Dropdown({
+    Title = "Select Egg",
+    Values = { "Category A", "Category B", "Category C" },
+    Value = { "Category A" },
+    Multi = true,
+    AllowNone = true,
+    Callback = function(option) 
+        print("Categories selected: " ..game:GetService("HttpService"):JSONEncode(option)) 
+    end
+})
+
+local webhookthershhatch_dd = webhook_sec:Dropdown({
+    Title = "Weight Threshold",
+    Values = { "Category A", "Category B", "Category C" },
+    Value = "Category A",
+    Callback = function(option) 
+        print("Category selected: " .. option) 
+    end
+})
+
+local webhookweighthatch_in = webhook_sec:Input({
+    Title = "Weight",
+    Placeholder = "e.g 3",
+    Value = "",
+    Numeric = true,
+    Callback = function(value) 
+        print("Input: " .. tostring(value)) 
+    end
+})
+
+local webhookhatch_tgl = webhook_sec:Toggle({
+    Title = "Webhook on Hatch",
     Default = false,
     Callback = function(state) 
         print("Toggle Activated" .. tostring(state))
